@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ludo</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f80ed">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eaf3ff;--ink:#17325c;--mut:#5f7aa3;--pri:#2f80ed;--pri2:#1c5fc0;--card:#fff;--line:#cfe0f7;--r:#ef4444;--g:#22c55e;--y:#eab308;--b:#3b82f6}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1b30;--ink:#e6efff;--mut:#9db4d8;--card:#172743;--line:#2a4166}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Baloo 2',system-ui,sans-serif;font-weight:500}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.scr{display:none;max-width:520px;margin:0 auto;padding:16px}
+.scr.on{display:block}
+.logo{display:block;width:210px;margin:8px auto 4px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px}
+h2{font-size:1.15rem;font-weight:800;margin:0 0 10px}
+input{width:100%;font:inherit;padding:11px 14px;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);margin-bottom:10px}
+input:focus,button:focus-visible{outline:3px solid var(--pri);outline-offset:1px}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:11px 16px;cursor:pointer;background:var(--pri);color:#fff;box-shadow:0 4px 0 var(--pri2);transition:transform .08s}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pri2)}
+button.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);box-shadow:0 4px 0 var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.err{color:#dc2626;min-height:1.3em;margin:4px 0}
+.seg button{box-shadow:none;border:2px solid var(--line);background:var(--bg);color:var(--ink)}
+.seg button.sel{background:var(--pri);color:#fff;border-color:var(--pri)}
+.seat{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.dot{width:20px;height:20px;border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.seat span{flex:1}.seat button{flex:none;min-width:96px;padding:7px 12px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.top small{color:var(--mut)}
+.lb div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)}
+/* Papan */
+.board{position:relative;width:min(94vw,62vh,520px);aspect-ratio:1;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 8px 24px #1c5fc040;overflow:hidden;border:3px solid #fff}
+.base{position:absolute;width:40%;height:40%}
+.base i{position:absolute;inset:16%;background:#fff;border-radius:14px}
+.slot{position:absolute;width:6%;height:6%;border-radius:50%;transform:translate(-50%,-50%);opacity:.35}
+.cell{position:absolute;width:6.6667%;height:6.6667%;border:1px solid #d4deee;background:#fff;display:grid;place-items:center;color:#8aa0c4;font-size:.8rem;line-height:1}
+.mid{position:absolute;left:40%;top:40%;width:20%;height:20%;background:conic-gradient(from 45deg,var(--y) 0 90deg,var(--b) 90deg 180deg,var(--r) 180deg 270deg,var(--g) 270deg 360deg)}
+.tk{position:absolute;width:5.6%;height:5.6%;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid #fff;box-shadow:0 2px 5px #0006;transition:left .28s,top .28s;z-index:2}
+.tk::after{content:"";position:absolute;left:22%;top:16%;width:34%;height:26%;border-radius:50%;background:#fff6}
+.tk.can{z-index:6;cursor:pointer;animation:pl .55s infinite alternate}
+@keyframes pl{to{transform:translate(-50%,-50%) scale(1.3)}}
+.ctl{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px}
+#dice{width:84px;height:84px;padding:0;border-radius:22px;background:#fff;border:3px solid var(--line);box-shadow:0 5px 0 var(--line);display:grid;place-items:center}
+#dice img{width:66px;height:66px;display:block}
+#dice b{position:absolute;font-size:1.6rem;color:var(--pri2);text-shadow:0 0 6px #fff,0 0 6px #fff}
+#dice{position:relative}
+#dice.roll img{animation:rl .5s linear}
+@keyframes rl{to{transform:rotate(540deg) scale(.85)}}
+#msg{font-weight:700;min-width:150px}
+.turn{display:flex;align-items:center;gap:8px;font-weight:800}
+.ov{position:fixed;inset:0;background:#0a1a3acc;display:none;place-items:center;z-index:20;padding:20px}
+.ov.on{display:grid}
+.ov .card{text-align:center;max-width:340px}
+@media(prefers-reduced-motion:reduce){.tk,#dice img{animation:none!important;transition:none}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="auth" class="scr on">
+  <img class="logo" src="icons/logo.png" alt="Ludo">
+  <div class="card">
+    <h2>Masuk untuk bermain</h2>
+    <input id="em" type="email" placeholder="Email" autocomplete="email">
+    <input id="pw" type="password" placeholder="Kata sandi (min. 6 karakter)" autocomplete="current-password">
+    <div class="err" id="aerr"></div>
+    <div class="row"><button id="bin">Masuk</button><button id="bup" class="alt">Daftar</button></div>
+    <div class="row" style="margin-top:12px"><button id="bgo" class="alt">Lanjut dengan Google</button></div>
+  </div>
+</section>
+
+<!-- MENU -->
+<section id="menu" class="scr">
+  <div class="top"><div><b id="uname">-</b><br><small id="ustat"></small></div><button id="bout" class="alt">Keluar</button></div>
+  <div class="card">
+    <h2>Jumlah pemain</h2>
+    <div class="row seg" id="segn"><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button></div>
+  </div>
+  <div class="card"><h2>Siapa yang main</h2><div id="seats"></div></div>
+  <div class="row"><button id="bstart">Mulai main</button><button id="bres" class="alt" style="display:none">Lanjutkan game</button></div>
+  <div class="card" style="margin-top:14px"><h2>Papan peringkat</h2><div class="lb" id="lb">Memuat…</div></div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="scr">
+  <div class="top"><button id="bback" class="alt">Menu</button><div class="turn"><span class="dot" id="tdot"></span><span id="tname"></span></div></div>
+  <div class="board" id="board"></div>
+  <div class="ctl"><button id="dice" aria-label="Lempar dadu"><img src="icons/dice.png" alt=""><b id="dnum"></b></button><div id="msg"></div></div>
+</section>
+
+<div class="ov" id="win"><div class="card"><img class="logo" style="width:120px" src="icons/dice.png" alt=""><h2 id="wt"></h2><p id="ws"></p><button id="bwin">Kembali ke menu</button></div></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,GoogleAuthProvider,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,deleteDoc,increment,collection,query,orderBy,limit,getDocs} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyBYzSPOcXG-ZQf94PHkulyrw1SPxiY0c5Q",
+  authDomain:"ludo-c1094.firebaseapp.com",
+  projectId:"ludo-c1094",
+  storageBucket:"ludo-c1094.firebasestorage.app",
+  messagingSenderId:"687362509705",
+  appId:"1:687362509705:web:bce473a82f787101596f58"
+});
+const auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);
+const show=id=>{document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id===id))};
+
+/* ---------- AUTH ---------- */
+const ERR={'auth/invalid-credential':'Email atau kata sandi salah.','auth/invalid-email':'Format email tidak valid.','auth/email-already-in-use':'Email sudah terdaftar. Silakan masuk.','auth/weak-password':'Kata sandi minimal 6 karakter.','auth/popup-closed-by-user':'Jendela Google ditutup sebelum selesai.','auth/network-request-failed':'Tidak ada koneksi internet.','auth/unauthorized-domain':'Domain ini belum diizinkan di Firebase Authentication.'};
+const fail=e=>{$('aerr').textContent=ERR[e.code]||('Gagal: '+e.code)};
+const cred=()=>[$('em').value.trim(),$('pw').value];
+$('bin').onclick=()=>signInWithEmailAndPassword(auth,...cred()).catch(fail);
+$('bup').onclick=()=>createUserWithEmailAndPassword(auth,...cred()).catch(fail);
+$('bgo').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(fail);
+$('bout').onclick=()=>signOut(auth);
+
+let me=null,hasSave=false;
+onAuthStateChanged(auth,async u=>{
+  me=u;
+  if(!u){show('auth');return}
+  const name=u.displayName||u.email.split('@')[0];
+  $('uname').textContent=name;
+  try{
+    await setDoc(doc(db,'users',u.uid),{name,wins:increment(0),played:increment(0)},{merge:true});
+    const s=(await getDoc(doc(db,'users',u.uid))).data();
+    $('ustat').textContent=`${s.played||0} main · ${s.wins||0} menang`;
+    hasSave=(await getDoc(doc(db,'users',u.uid,'private','save'))).exists();
+  }catch(e){$('ustat').textContent='Data belum bisa dimuat (cek Rules Firestore)'}
+  $('bres').style.display=hasSave?'':'none';
+  show('menu');loadLB();
+});
+async function loadLB(){
+  try{
+    const q=await getDocs(query(collection(db,'users'),orderBy('wins','desc'),limit(10)));
+    const rows=[];q.forEach(d=>{const x=d.data();if(x.played)rows.push(`<div><span>${rows.length+1}. ${esc(x.name||'Pemain')}</span><b>${x.wins} menang / ${x.played}</b></div>`)});
+    $('lb').innerHTML=rows.join('')||'Belum ada pertandingan. Jadilah yang pertama menang!';
+  }catch(e){$('lb').textContent='Papan peringkat belum bisa dimuat.'}
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- MENU ---------- */
+const COL=['#ef4444','#22c55e','#eab308','#3b82f6'],CN=['Merah','Hijau','Kuning','Biru'];
+const COLORS={2:[0,2],3:[0,1,2],4:[0,1,2,3]};
+let cfg={n:2,bots:[false,true,true,true]};
+function drawMenu(){
+  document.querySelectorAll('#segn button').forEach(b=>b.classList.toggle('sel',+b.dataset.n===cfg.n));
+  $('seats').innerHTML=COLORS[cfg.n].map((c,s)=>`<div class="seat"><i class="dot" style="background:${COL[c]}"></i><span>${s?CN[c]:'Kamu ('+CN[c]+')'}</span>${s?`<button class="alt" data-s="${s}">${cfg.bots[s]?'Bot':'Manusia'}</button>`:''}</div>`).join('');
+}
+$('segn').onclick=e=>{const n=e.target.dataset.n;if(n){cfg.n=+n;drawMenu()}};
+$('seats').onclick=e=>{const s=e.target.dataset.s;if(s){cfg.bots[s]=!cfg.bots[s];drawMenu()}};
+drawMenu();
+
+/* ---------- PAPAN ---------- */
+const P=[];const add=(r,c,dr,dc,n)=>{for(let i=0;i<n;i++)P.push([r+dr*i,c+dc*i])};
+add(6,1,0,1,5);add(5,6,-1,0,6);add(0,7,0,1,2);add(1,8,1,0,5);add(6,9,0,1,6);add(7,14,1,0,2);add(8,13,0,-1,5);add(9,8,1,0,6);add(14,7,0,-1,2);add(13,6,-1,0,5);add(8,5,0,-1,6);add(7,0,-1,0,2);
+const START=[0,13,26,39],SAFE=new Set([...START,...START.map(s=>(s+8)%52)]);
+const HOME=[[[7,1],[7,2],[7,3],[7,4],[7,5]],[[1,7],[2,7],[3,7],[4,7],[5,7]],[[7,13],[7,12],[7,11],[7,10],[7,9]],[[13,7],[12,7],[11,7],[10,7],[9,7]]];
+const ORG=[[0,0],[0,9],[9,9],[9,0]],FIN=[[-.7,0],[0,-.7],[.7,0],[0,.7]];
+const pct=v=>(v/15*100)+'%';
+function pos(c,p,i){
+  if(p<0)return[ORG[c][1]+2+(i%2)*2,ORG[c][0]+2+(i>>1)*2];
+  if(p<=50){const[r,k]=P[(START[c]+p)%52];return[k+.5,r+.5]}
+  if(p<=55){const[r,k]=HOME[c][p-51];return[k+.5,r+.5]}
+  return[7.5+FIN[c][0]+i*.08,7.5+FIN[c][1]+i*.08];
+}
+const B=$('board');let tks=[];
+function buildBoard(){
+  let h='';
+  ORG.forEach(([r,c],k)=>{h+=`<div class="base" style="left:${pct(c)};top:${pct(r)};background:${COL[k]}"><i></i></div>`;
+    [[2,2],[4,2],[2,4],[4,4]].forEach(([a,b])=>h+=`<div class="slot" style="left:${pct(c+a)};top:${pct(r+b)};background:${COL[k]}"></div>`)});
+  h+='<div class="mid"></div>';
+  P.forEach(([r,c],i)=>{const si=START.indexOf(i);h+=`<div class="cell" style="left:${pct(c)};top:${pct(r)};${si>=0?'background:'+COL[si]:''}">${SAFE.has(i)&&si<0?'★':''}</div>`});
+  HOME.forEach((a,k)=>a.forEach(([r,c])=>h+=`<div class="cell" style="left:${pct(c)};top:${pct(r)};background:${COL[k]}"></div>`));
+  B.innerHTML=h;
+}
+
+/* ---------- LOGIKA GAME ---------- */
+let G=null,busy=false;
+const col=s=>G.seats[s].c,abs=(s,p)=>(START[col(s)]+p)%52;
+function newGame(){
+  const seats=COLORS[cfg.n].map((c,s)=>({c,bot:s?cfg.bots[s]:false,name:s?CN[c]:'Kamu'}));
+  G={seats,t:0,tk:seats.map(()=>[-1,-1,-1,-1]),d:0,st:'roll'};startGame();
+}
+function startGame(){
+  buildBoard();tks=[];
+  G.seats.forEach((st,s)=>{tks[s]=[];for(let i=0;i<4;i++){const e=document.createElement('div');e.className='tk';e.style.background=COL[st.c];e.onclick=()=>pick(s,i);B.appendChild(e);tks[s][i]=e}});
+  $('win').classList.remove('on');show('game');render();
+  if(G.seats[G.t].bot)setTimeout(roll,700);
+}
+function moves(s,d){return[0,1,2,3].filter(i=>{const p=G.tk[s][i];return p===-1?d===6:p+d<=56})}
+function render(){
+  const seen={},t=G.t;
+  G.seats.forEach((st,s)=>G.tk[s].forEach((p,i)=>{
+    const[x,y]=pos(st.c,p,i),k=x+','+y,n=seen[k]=(seen[k]||0)+1;
+    const e=tks[s][i];e.style.left=pct(x+(n-1)*.16);e.style.top=pct(y-(n-1)*.16);
+    e.classList.toggle('can',s===t&&G.st==='move'&&!st.bot&&G.ml.includes(i));
+  }));
+  $('tdot').style.background=COL[col(t)];$('tname').textContent='Giliran: '+G.seats[t].name;
+  $('dice').disabled=!(G.st==='roll'&&!G.seats[t].bot);
+}
+function roll(){
+  if(!G||G.st!=='roll'||busy)return;
+  busy=true;const dv=$('dice');dv.classList.add('roll');$('dnum').textContent='';$('msg').textContent='Mengocok…';
+  setTimeout(()=>{
+    dv.classList.remove('roll');busy=false;
+    G.d=1+Math.floor(Math.random()*6);$('dnum').textContent=G.d;
+    G.ml=moves(G.t,G.d);G.st='move';
+    if(!G.ml.length){$('msg').textContent=`Dapat ${G.d}. Tidak ada langkah.`;G.st='wait';render();return setTimeout(()=>next(false),1000)}
+    $('msg').textContent=`Dapat ${G.d}.`+(G.seats[G.t].bot?'':' Pilih bidak.');
+    render();
+    if(G.seats[G.t].bot)setTimeout(()=>move(bot()),700);
+    else if(G.ml.length===1)setTimeout(()=>move(G.ml[0]),450);
+  },520);
+}
+$('dice').onclick=roll;
+function pick(s,i){if(G&&G.st==='move'&&s===G.t&&!G.seats[s].bot&&G.ml.includes(i))move(i)}
+function bot(){
+  const s=G.t,d=G.d;let best=G.ml[0],bs=-1;
+  G.ml.forEach(i=>{
+    const p=G.tk[s][i],np=p===-1?0:p+d;let sc=np*.1;
+    if(p===-1)sc+=30;if(np===56)sc+=40;else if(np>=51)sc+=20;
+    if(np<=50){const a=abs(s,np);if(SAFE.has(a))sc+=8;
+      G.seats.forEach((_,o)=>{if(o!==s)G.tk[o].forEach(q=>{if(q>=0&&q<=50&&abs(o,q)===a&&!SAFE.has(a))sc+=50})})}
+    if(sc>bs){bs=sc;best=i}
+  });return best;
+}
+function move(i){
+  if(G.st!=='move')return;G.st='wait';
+  const s=G.t,d=G.d,p=G.tk[s][i],np=p===-1?0:p+d;let cap=false;
+  G.tk[s][i]=np;
+  if(np<=50){const a=abs(s,np);if(!SAFE.has(a))G.seats.forEach((_,o)=>{if(o!==s)G.tk[o].forEach((q,j)=>{if(q>=0&&q<=50&&abs(o,q)===a){G.tk[o][j]=-1;cap=true}})})}
+  $('msg').textContent=cap?'Bidak lawan termakan!':np===56?'Satu bidak sampai!':'';
+  render();
+  const won=G.tk[s].every(v=>v===56);
+  setTimeout(()=>won?finish(s):next(d===6||cap||np===56),600);
+}
+function next(extra){
+  if(!extra)G.t=(G.t+1)%G.seats.length;
+  G.st='roll';G.ml=[];render();save();
+  if(G.seats[G.t].bot)setTimeout(roll,700);
+}
+
+/* ---------- FIRESTORE ---------- */
+const saveRef=()=>doc(db,'users',me.uid,'private','save');
+function save(){if(me)setDoc(saveRef(),{data:JSON.stringify({seats:G.seats,t:G.t,tk:G.tk}),at:Date.now()}).catch(()=>{})}
+async function finish(s){
+  G.st='over';const w=G.seats[s];
+  $('wt').textContent=s===0?'Kamu menang! 🎉':`${w.name} menang!`;
+  $('ws').textContent=s===0?'Kemenangan tercatat di papan peringkat.':'Coba lagi untuk membalas.';
+  $('win').classList.add('on');
+  try{
+    await deleteDoc(saveRef());hasSave=false;
+    await setDoc(doc(db,'users',me.uid),{played:increment(1),wins:increment(s===0?1:0)},{merge:true});
+  }catch(e){}
+}
+$('bstart').onclick=async()=>{newGame();if(hasSave){try{await deleteDoc(saveRef());hasSave=false}catch(e){}}};
+$('bres').onclick=async()=>{
+  try{const d=await getDoc(saveRef());const v=JSON.parse(d.data().data);G={...v,d:0,st:'roll',ml:[]};startGame()}
+  catch(e){$('bres').style.display='none'}
+};
+const toMenu=()=>{$('win').classList.remove('on');if(G&&G.st!=='over')hasSave=true;G=null;busy=false;$('bres').style.display=hasSave?'':'none';show('menu');loadLB();
+  getDoc(doc(db,'users',me.uid)).then(d=>{const s=d.data();$('ustat').textContent=`${s.played||0} main · ${s.wins||0} menang`}).catch(()=>{})};
+$('bback').onclick=()=>{if(G&&G.st!=='over')save();toMenu()};
+$('bwin').onclick=toMenu;
+
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
+</script>
+</body>
+</html>
