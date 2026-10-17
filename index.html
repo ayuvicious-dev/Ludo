@@ -151,12 +151,49 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
 .pcoin{font-size:.66rem;font-weight:800;color:var(--mut);line-height:1.3;text-align:center;white-space:nowrap}
 .pn2{font-size:.72rem;font-weight:700;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ds{width:68px;height:68px;flex:none}
+#rrbox{flex-direction:column;gap:6px;flex:none;width:54px}
+#rrbox button{width:100%;min-width:0;padding:5px 2px;font-size:.74rem;line-height:1.1;border-radius:11px;box-shadow:0 3px 0 var(--pri2)}
+#rrbox button.alt{box-shadow:0 3px 0 var(--line)}
+#rrbox small{display:block;font-size:.62rem;font-weight:700;color:var(--mut)}
 /* ---- Spin koin ---- */
 .wheelw{position:relative;width:min(72vw,260px);margin:18px auto 16px}
 .wheelw svg{display:block;width:100%;filter:drop-shadow(0 6px 10px rgba(20,50,110,.3));transition:transform 4s cubic-bezier(.17,.67,.2,1)}
 .wheelw .ptr{position:absolute;left:50%;top:-8px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid var(--ink);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
 @media(prefers-reduced-motion:reduce){.wheelw svg{transition-duration:.01s}}
 #dice{width:68px;height:68px;border-radius:18px}#dice img{width:52px;height:52px}
+
+/* ---- Layar game: muat satu layar (tanpa scroll) ---- */
+body:has(#game.on){overflow:hidden}
+#game.scr.on{display:flex;flex-direction:column;height:100vh;height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:8px 12px;gap:4px;overflow:hidden}
+#game .top{margin:0;flex:none}
+#game .gm{flex:1;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center}
+#game .gi{--ph:108px;--bs:min(100cqw,calc(100cqh - 2*var(--ph) - 16px),520px);width:var(--bs);display:flex;flex-direction:column;gap:8px}
+#game .gi .pls,#game .gi .board{width:var(--bs);margin:0}
+#game .pl{height:var(--ph);min-height:0}
+#game .gs{flex:none;display:flex;flex-direction:column;align-items:center;text-align:center}
+#game .ctl{margin:0;gap:0}
+#game #msg{min-width:0;min-height:1.3em;line-height:1.3}
+#game #clk{min-height:1.3em;line-height:1.3}
+#game #mode,#game #gbet:empty{display:none}
+#game .av{width:50px;height:50px}
+#game #rrbox{gap:4px}
+#game #rrbox button{padding:3px 2px}
+#game #rrbox small{line-height:1}
+@media(max-height:680px){
+ #game .gi{--ph:84px}
+ #game .pl{gap:4px;padding:2px 4px}
+ #game .pw{width:54px;gap:1px}
+ #game .av{width:40px;height:40px;border-radius:12px;font-size:1.2rem}
+ #game .pn2{font-size:.66rem;line-height:1.1;max-width:54px}
+ #game .pcoin{font-size:.6rem;line-height:1.1}
+ #game .ds{width:58px;height:58px}
+ #game #dice{width:58px;height:58px;border-radius:15px}#game #dice img{width:44px;height:44px}
+ #game #rrbox{width:50px}
+}
+
+.pw{position:relative}
+.lv{position:absolute;top:-5px;right:-5px;background:var(--card);border:2px solid #ef4444;color:#ef4444;border-radius:10px;font-size:.62rem;font-weight:800;line-height:1;padding:2px 5px;white-space:nowrap;z-index:2}
+.lv.low{background:#ef4444;color:#fff}
 </style>
 </head>
 <body>
@@ -177,7 +214,7 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
 <!-- MENU -->
 <section id="menu" class="scr tabbed">
   <div class="folds">
-  <div class="fold" style="--fc:#3b82f6"><div class="fs" role="button" tabindex="0"><i class="em" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg></i><span>Game Online</span></div><div class="pn"><div class="stp" data-s="1"><p>Pilih mode permainan.</p><div id="modes"></div></div><div class="stp" data-s="2" hidden><p class="sl"></p><button id="bsr" style="width:100%">Cari lawan</button><button id="binv" class="alt" style="width:100%;margin-top:10px">Undang teman</button><button class="alt sm" data-back style="width:100%;margin-top:10px">Kembali</button></div><div class="stp" data-s="3" hidden><p class="sl"></p><div class="betbox" style="margin:0 0 12px"></div><button id="bq" style="width:100%">Mulai cari lawan</button><div id="olist" style="display:none"></div><button class="alt sm" data-back style="width:100%;margin-top:10px">Kembali</button></div><div class="err" id="qmsg"></div></div></div>
+  <div class="fold" style="--fc:#3b82f6"><div class="fs" role="button" tabindex="0"><i class="em" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg></i><span>Game Online</span></div><div class="pn"><div class="stp" data-s="1"><p>Pilih mode permainan.</p><div id="modes"></div></div><div class="stp" data-s="2" hidden><p class="sl"></p><button id="bsr" style="width:100%">Cari lawan</button><button id="binv" class="alt" style="width:100%;margin-top:10px">Undang teman</button><button class="alt sm" data-back style="width:100%;margin-top:10px">Kembali</button></div><div class="stp" data-s="3" hidden><p class="sl"></p><div class="betbox" style="margin:0 0 12px"></div><button id="bq" style="width:100%">Mulai cari lawan</button><button class="alt sm" data-back="2" style="width:100%;margin-top:10px">Kembali</button></div><div class="stp" data-s="4" hidden><p class="sl"></p><div id="olist"></div><button class="alt sm" data-back="2" style="width:100%;margin-top:10px">Kembali</button></div><div class="stp" data-s="5" hidden><p class="sl"></p><div class="betbox" style="margin:0 0 12px"></div><button id="bbet" style="width:100%">Lanjut</button><button class="alt sm" data-back="4" style="width:100%;margin-top:10px">Kembali</button></div><div class="stp" data-s="6" hidden><p class="sl"></p><div id="isum" style="margin-bottom:12px"></div><button id="binvgo" style="width:100%">Mulai bermain</button><button class="alt sm" data-back="5" style="width:100%;margin-top:10px">Kembali</button></div><div class="err" id="qmsg"></div></div></div>
   <div class="fold" style="--fc:#22c55e"><div class="fs" role="button" tabindex="0"><i class="em" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.2c2.3.4 4 2.4 4 4.8"/></svg></i><span>Game Tim</span></div><div class="pn"><p>Tim menang kalau semua bidak kedua anggotanya sampai di tengah. Kamu Biru.</p><div id="tseats"></div><button id="bteam" style="width:100%">Mulai game tim</button></div></div>
   <div class="fold" style="--fc:#eab308"><div class="fs" role="button" tabindex="0"><i class="em" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20.5s-8-4.9-8-11A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5c0 6.1-8 11-8 11z"/></svg></i><span>Game Teman</span></div><div class="pn"><p>Pilih dari daftar temanmu, lalu kirim ajakan main.</p><button id="bfr" style="width:100%">Buka daftar teman</button></div></div>
   <div class="fold" style="--fc:#ef4444"><div class="fs" role="button" tabindex="0"><i class="em" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="3.8" r="1"/><circle cx="9" cy="13.5" r="1.1" fill="currentColor"/><circle cx="15" cy="13.5" r="1.1" fill="currentColor"/></svg></i><span>Game Komputer</span></div><div class="pn"><p>Pilih jumlah lawan bot.</p><div class="row seg" id="segc" style="margin-bottom:12px"><button data-n="2">1 bot</button><button data-n="3">2 bot</button><button data-n="4">3 bot</button></div><div class="betbox" style="margin-bottom:12px"></div><button id="bcom" style="width:100%">Mulai lawan komputer</button><div class="err" id="cmsg"></div></div></div>
@@ -257,14 +294,18 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
 <!-- GAME -->
 <section id="game" class="scr">
   <div class="top"><button id="bback" class="alt">Menu</button><div class="turn"><span class="dot" id="tdot"></span><span id="tname"></span></div></div>
+  <div class="gm"><div class="gi">
   <div class="pls top"><div class="pl" id="pl0"></div><div class="pl r" id="pl1"></div></div>
   <div class="board" id="board"></div>
   <div class="pls bot"><div class="pl" id="pl3"></div><div class="pl r" id="pl2"></div></div>
+  </div></div>
+  <div class="gs" id="gs">
   <div class="ctl" id="ctl"><button id="dice" aria-label="Lempar dadu"><img data-i="dice" alt=""><span class="pips" id="pips"></span><b id="dnum"></b></button><div id="msg"></div></div>
-  <div id="clk" style="text-align:center;font-weight:800;min-height:1.4em;margin-top:8px;color:var(--pri2)"></div>
-  <div id="rrbox" style="display:none;justify-content:center;gap:10px;margin-top:8px"><button id="brr" class="alt">🕒 <b id="rrt">3</b> · Kocok lagi (1 💎)</button><button id="bkeep">Lanjut</button></div>
-  <div id="mode" style="text-align:center;color:var(--mut);margin-top:12px;font-size:.9rem"></div>
-  <div id="gbet" style="text-align:center;color:var(--mut);margin-top:6px;font-size:.9rem;font-weight:700"></div>
+  <div id="clk" style="text-align:center;font-weight:800;color:var(--pri2)"></div>
+  <div id="rrbox" style="display:none"><button id="brr" class="alt" aria-label="Kocok lagi (1 berlian)">↻ <b id="rrt">3</b><small>1 💎</small></button><button id="bkeep">Lanjut</button></div>
+  <div id="mode" style="text-align:center;color:var(--mut);font-size:.9rem"></div>
+  <div id="gbet" style="text-align:center;color:var(--mut);font-size:.9rem;font-weight:700"></div>
+  </div>
 </section>
 
 <div class="ov" id="win"><div class="card"><img class="logo" style="width:120px" data-i="dice" alt=""><h2 id="wt"></h2><p id="ws"></p><button id="bwin">Kembali ke menu</button></div></div>
@@ -385,6 +426,7 @@ function drawPC(){
     if(s===my)e.innerHTML=`🪙 ${fc(myCoins)}<br>💎 ${fmt(myDia)}`;
     else e.textContent=typeof st.coins==='number'?`🪙 ${fc(st.coins)}`:'';
   });
+  G.seats.forEach((st,s)=>{const l=document.querySelector(`.lv[data-c="${st.c}"]`);if(l){const n=G.lives?G.lives[s]:5;l.textContent='❤ '+n;l.classList.toggle('low',n<=2)}});
 }
 function setBet(b,n){G.bet=b;G.pot=b*n;G.staked=false}
 function takeStake(){if(G&&G.bet>0&&!G.staked){G.staked=true;addCoins(-G.bet)}} // taruhan dipotong saat game benar-benar mulai
@@ -392,8 +434,7 @@ function gbet(){
   const e=$('gbet');if(!e)return;
   if(!G){e.textContent='';return}
   const a=G.bet>0?`Taruhan ${fmt(G.bet)} · Hadiah ${fmt(G.pot)} 🪙`:'';
-  const b=G.two?(myDia>0?`1 lempar = 1 💎 (sisa ${fmt(myDia)})`:'Berlian habis: 1 lempar per giliran'):G.quick?(myDia>0?`Kocok ulang = 1 💎 (sisa ${fmt(myDia)})`:'Berlian habis: tidak bisa kocok ulang'):'';
-  e.textContent=[a,b].filter(Boolean).join('  ·  ');
+  e.textContent=a;
 }
 async function loadLB(){}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -457,7 +498,7 @@ const COLORS={2:[3,1],3:[3,0,1],4:[3,0,1,2]}; // kursi 0 = kamu (Biru). Game Tim
 const cfg={tb:[false,true,true,true],cn:2,on:2,mode:'classic',bet:0};
 const MODES=[['classic','Classic','Semua pion harus masuk base untuk menang'],['kill','1 Kill Win','Pemain pertama yang menendang pion lawan langsung menang'],['quick','Quick','Pintu utama terkunci sampai kamu menendang. Satu pion sampai base = menang. Boleh kocok ulang 1x (1 berlian, pilih dalam 3 detik). Mulai dengan 2 pion sudah keluar dari base. Waktu jalan pion 7 detik'],['popular','Popular','Lempar dadu 2x per giliran. Semua pion harus masuk base untuk menang']];
 const MN=Object.fromEntries(MODES.map(m=>[m[0],[m[1],m[2]]]));
-function drawModes(){const h=MODES.map(([k,t,d])=>`<button class="opt${cfg.mode===k?' sel':''}" data-k="${k}">${t}<small>${d}</small></button>`).join('');['modes','modes2'].forEach(id=>$(id).innerHTML=h)}
+function drawModes(){const h=MODES.map(([k,t])=>`<button class="opt${cfg.mode===k?' sel':''}" data-k="${k}">${t}</button>`).join('');['modes','modes2'].forEach(id=>$(id).innerHTML=h)}
 ['modes','modes2'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('[data-k]');if(b){cfg.mode=b.dataset.k;drawModes();if(id==='modes')onStep(2)}});drawModes();
 function drawOl(){const h=FR.length?FR.map(f=>`<div class="seat"><span>${esc(f.name)}</span><button class="sm" data-id="${f.id}">Undang</button></div>`).join(''):'<p style="margin:0;color:var(--mut)">Belum ada teman. Tambahkan dulu lewat tab Teman.</p>';$('olist').innerHTML=h;$('olist2').innerHTML=h}
 let olPath='search';
@@ -466,15 +507,23 @@ function onStep(n){
   $('qmsg').textContent='';
   const inv=olPath==='invite',m=MN[cfg.mode][0],sl=document.querySelector(`#menu .stp[data-s="${n}"] .sl`);
   if(n===2)sl.textContent=`Mode ${m}. Pilih cara bermain.`;
-  if(n===3){
-    sl.textContent=inv?`Mode ${m} · Undang teman. Pilih koin taruhan, lalu pilih teman.`:`Mode ${m} · Cari lawan. Pilih koin taruhan.`;
-    $('bq').style.display=inv?'none':'';$('olist').style.display=inv?'block':'none';if(inv)drawOl();
+  const fn=(FR.find(x=>x.id===selFid)||{}).name||'';
+  if(n===3)sl.textContent=`Mode ${m} · Cari lawan. Pilih koin taruhan.`;
+  if(n===4){sl.textContent=`Mode ${m} · Pilih teman yang ingin diundang.`;drawOl()}
+  if(n===5)sl.textContent=`Undang ${fn}. Pilih koin taruhan.`;
+  if(n===6){sl.textContent='Cek lagi sebelum mulai.';
+    const row=(a,b)=>`<div class="seat"><span>${a}</span><b>${b}</b></div>`;
+    $('isum').innerHTML=row('Mode',esc(m))+row('Teman',esc(fn))+row('Taruhan',cfg.bet?fmt(cfg.bet)+' koin':'Tanpa taruhan');
   }
 }
+let selFid=null;
 $('bsr').onclick=()=>{olPath='search';onStep(3)};
-$('binv').onclick=()=>{olPath='invite';onStep(3)};
-document.addEventListener('click',e=>{const b=e.target.closest('#menu [data-back]');if(b)onStep(+b.closest('.stp').dataset.s-1)});
-['olist','olist2'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('button[data-id]');if(b)invite(b.dataset.id,cfg.mode)});drawOl();
+$('binv').onclick=()=>{olPath='invite';selFid=null;onStep(4)};
+$('bbet').onclick=()=>{if(!checkBet($('qmsg')))return;onStep(6)};
+$('binvgo').onclick=()=>invite(selFid,cfg.mode);
+document.addEventListener('click',e=>{const b=e.target.closest('#menu [data-back]');if(b)onStep(+b.dataset.back||+b.closest('.stp').dataset.s-1)});
+$('olist').onclick=e=>{const b=e.target.closest('button[data-id]');if(b){selFid=b.dataset.id;onStep(5)}};
+$('olist2').onclick=e=>{const b=e.target.closest('button[data-id]');if(b)invite(b.dataset.id,cfg.mode)};drawOl();
 function seg(id,key){const el=$(id),d=()=>el.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.n===cfg[key]));el.onclick=e=>{const n=e.target.dataset.n;if(n){cfg[key]=+n;d()}};d()}
 seg('segc','cn');seg('sego','on');
 function drawTeam(){$('tseats').innerHTML=[1,2,3].map(s=>`<div class="seat"><i class="dot" style="background:${COL[COLORS[4][s]]}"></i><span>${CN[COLORS[4][s]]} ${s===2?'(timmu)':'(lawan)'}</span><button class="alt" data-s="${s}">${cfg.tb[s]?'Bot':'Manusia'}</button></div>`).join('')}
@@ -509,15 +558,15 @@ let G=null,busy=false;
 const col=s=>G.seats[s].c,abs=(s,p)=>(START[col(s)]+p)%52;
 function newGame(o){
   const seats=COLORS[o.n].map((c,s)=>({c,bot:s?o.bots[s]:false,name:s?CN[c]:(myName||'Kamu'),photo:s?'':myPhoto}));
-  G={seats,t:0,tk:seats.map(()=>[-1,-1,-1,-1]),d:0,st:'roll',team:!!o.team};startGame();
+  G={seats,t:0,tk:seats.map(()=>[-1,-1,-1,-1]),d:0,st:'roll',team:!!o.team,lives:seats.map(()=>5)};startGame();
 }
 function buildPanels(){
-  $('ctl').appendChild($('dice'));
+  $('ctl').appendChild($('dice'));$('gs').appendChild($('rrbox'));
   [0,1,2,3].forEach(c=>{
     const st=G.seats.find(x=>x.c===c),el=$('pl'+c);
     if(!st){el.innerHTML='';el.style.visibility='hidden';return}
     el.style.visibility='';
-    el.innerHTML=`<div class="pw"><div class="av" style="border-color:${COL[c]};background:${COL[c]}">${st.photo?`<img src="${esc(st.photo)}" referrerpolicy="no-referrer" alt="">`:esc((st.name||'?')[0].toUpperCase())}</div><span class="pn2">${esc(st.name)}</span><span class="pcoin" data-c="${c}"></span></div><div class="ds"></div>`;
+    el.innerHTML=`<div class="pw"><div class="av" style="border-color:${COL[c]};background:${COL[c]}">${st.photo?`<img src="${esc(st.photo)}" referrerpolicy="no-referrer" alt="">`:esc((st.name||'?')[0].toUpperCase())}</div><span class="pn2">${esc(st.name)}</span><span class="pcoin" data-c="${c}"></span>${st.bot?'':`<span class="lv" data-c="${c}"></span>`}</div><div class="ds"></div>`;
   });
   drawPC();
 }
@@ -533,12 +582,13 @@ function render(){
   G.seats.forEach((st,s)=>G.tk[s].forEach((p,i)=>{
     const[x,y]=pos(st.c,p,i),k=x+','+y,n=seen[k]=(seen[k]||0)+1;
     const e=tks[s][i];e.style.left=pct(x+(n-1)*.16);e.style.top=pct(y-(n-1)*.16);
-    const cn=s===t&&G.st==='move'&&!st.bot&&(!G.online||s===G.my)&&G.ml.includes(i);e.classList.toggle('can',cn);e.classList.toggle('six',cn&&G.d===6);
+    const cn=s===t&&(G.st==='move'||G.st==='dec')&&!st.bot&&(!G.online||s===G.my)&&G.ml.includes(i);e.classList.toggle('can',cn);e.classList.toggle('six',cn&&G.d===6);
   }));
   $('tdot').style.background=COL[col(t)];$('tname').textContent='Giliran: '+G.seats[t].name+(G.two?` (lempar ${3-G.rl}/2)`:'');
   $('mode').textContent='';
   [0,1,2,3].forEach(c=>$('pl'+c).classList.toggle('on',c===col(t)));
   const ds=$('pl'+col(t)).querySelector('.ds');if(ds&&$('dice').parentNode!==ds)ds.appendChild($('dice'));
+  const rb=$('rrbox'),pa=$('pl'+col(t));if(rb.parentNode!==pa)pa.appendChild(rb);
   $('dice').disabled=!(G.st==='roll'&&!G.seats[t].bot&&(!G.online||t===G.my));
 }
 function roll(){
@@ -550,7 +600,7 @@ function roll(){
     G.d=1+Math.floor(Math.random()*6);$('dnum').textContent=G.d;
     G.ml=moves(G.t,G.d);
     if(G.quick&&!G.rrUsed&&!G.seats[G.t].bot&&myDia>0){ // Quick: boleh kocok ulang 1x (1 berlian), 3 detik untuk memutuskan
-      G.st='dec';$('msg').textContent=`Dapat ${G.d}. Kocok lagi?`;render();push({ck:'dec',rem:3000});
+      G.st='dec';$('msg').textContent=`Dapat ${G.d}.`;render();push({ck:'dec',rem:3000});
       showRR();startClock(3000,'dec',()=>decide(false));return;
     }
     afterRoll();
@@ -562,11 +612,22 @@ function afterRoll(){
   if(!G.ml.length){$('msg').textContent=`Dapat ${G.d}. Tidak ada langkah.`;G.st='wait';render();push();return setTimeout(()=>next(false),1000)}
   G.st='move';$('msg').textContent=`Dapat ${G.d}.`+(bt?'':' Pilih bidak.');render();
   if(bt){push();return setTimeout(()=>move(bot()),700)}
-  if(G.ml.length===1){push();return setTimeout(()=>move(G.ml[0]),450)}
-  if(G.quick){ // Quick: 7 detik untuk memilih & memindahkan pion
-    const t0=G.t;push({ck:'mv',rem:7000});
-    startClock(7000,'mv',()=>{if(G&&G.st==='move'&&G.t===t0){toast('Waktu habis! Bidak digerakkan otomatis.');move(bot())}});
-  }else push();
+  if(new Set(G.ml.map(i=>G.tk[G.t][i])).size===1){push();return setTimeout(()=>move(G.ml[0]),450)} // 1 opsi langkah (pion di titik sama dianggap 1 opsi)
+  // 7 detik untuk memilih pion; telat = nyawa -1 dan pion bergerak acak
+  const t0=G.t;push({ck:'mv',rem:7000});
+  startClock(7000,'mv',()=>{if(G&&G.st==='move'&&G.t===t0)timeoutMove()});
+}
+function timeoutMove(){
+  const s=G.t;G.lives[s]=Math.max(0,(G.lives[s]||0)-1);drawPC();
+  if(G.lives[s]<=0)return forfeit(s);
+  toast(`Waktu habis! Pion bergerak acak. Nyawa tersisa ${G.lives[s]} ❤`);
+  move(G.ml[Math.floor(Math.random()*G.ml.length)]);
+}
+function forfeit(s){
+  stopClock();hideRR();G.lifeOut=s;
+  const w=(s+1)%G.seats.length;
+  $('msg').textContent='Nyawa habis!';
+  push({st:'over',w,out:s});finish(w);
 }
 function decide(again){
   if(!G||G.st!=='dec')return;
@@ -583,12 +644,12 @@ function startClock(ms,kind,onEnd){
   stopClock();clkEnd=Date.now()+ms;
   const lab=kind==='dec'?'Kocok lagi?':'Pilih bidak';
   const tick=()=>{const left=Math.max(0,clkEnd-Date.now()),n=Math.ceil(left/1000);
-    $('clk').textContent=`🕒 ${n} · ${lab}`;$('rrt').textContent=n;
+    $('clk').textContent=kind==='dec'&&$('rrbox').style.display!=='none'?'':`🕒 ${n} · ${lab}`;$('rrt').textContent=n;
     if(left<=0){stopClock();if(onEnd)onEnd()}};
   tick();clkI=setInterval(tick,200);
 }
 $('dice').onclick=roll;
-function pick(s,i){if(G&&G.st==='move'&&s===G.t&&!G.seats[s].bot&&(!G.online||s===G.my)&&G.ml.includes(i))move(i)}
+function pick(s,i){if(G&&(G.st==='move'||G.st==='dec')&&s===G.t&&!G.seats[s].bot&&(!G.online||s===G.my)&&G.ml.includes(i)){if(G.st==='dec'){stopClock();hideRR();G.st='move'}move(i)}}
 function bot(){
   const s=G.t,d=G.d;let best=G.ml[0],bs=-1;
   G.ml.forEach(i=>{
@@ -625,6 +686,7 @@ async function finish(s){
   $('wt').textContent=mine?(G.team?'Timmu menang! 🎉':'Kamu menang! 🎉'):(G.team?'Tim lawan menang!':`${w.name} menang!`);
   $('ws').textContent=mine?'Kemenangan tercatat di papan peringkat.':'Coba lagi untuk membalas.';
   if(G.bet>0&&G.staked){if(mine){addCoins(G.pot);$('ws').textContent=`Hadiah ${fmt(G.pot)} koin masuk ke dompetmu. 🎉`}else $('ws').textContent=`Taruhan ${fmt(G.bet)} koin hilang.`}
+  if(G.lifeOut!=null)$('ws').textContent=`${G.seats[G.lifeOut].name} kehabisan nyawa. `+$('ws').textContent;
   $('win').classList.add('on');
   try{
     if(!G.online){await deleteDoc(saveRef());hasSave=false}
@@ -744,7 +806,7 @@ async function quickMatch(){
 }
 function startOnline(id,my,names,wait,mode='classic',photos=[],bet=0){
   if(unsubRoom)unsubRoom();
-  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],t:0,tk:mode==='quick'?[[0,0,-1,-1],[0,0,-1,-1]]:[[-1,-1,-1,-1],[-1,-1,-1,-1]],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:mode==='popular',quick:mode==='quick',rl:2,open:[false,false],bet,pot:bet*2,staked:false};
+  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],t:0,tk:mode==='quick'?[[0,0,-1,-1],[0,0,-1,-1]]:[[-1,-1,-1,-1],[-1,-1,-1,-1]],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:mode==='popular',quick:mode==='quick',rl:2,open:[false,false],bet,pot:bet*2,staked:false,lives:[5,5]};
   startGame();if(!wait)takeStake();gbet();$('dnum').textContent='';$('msg').textContent=wait?(names[1]==='Lawan'?'Mencari lawan…':`Menunggu ${names[1]}…`):'';
   unsubRoom=onSnapshot(doc(db,'rooms',id),onRoom);
 }
@@ -761,12 +823,12 @@ function onRoom(snap){
     if(G.bet>0&&G.staked&&!G.done){G.done=true;addCoins(G.pot);return end('Lawan keluar',`Kamu menang! Hadiah ${fmt(G.pot)} koin masuk ke dompetmu.`)}
     return end('Lawan keluar','Pertandingan dihentikan.');
   }
-  if(d.s){const v=JSON.parse(d.s);G.t=v.t;G.tk=v.tk;G.d=v.d;G.st=v.st;G.ml=v.ml;if(v.rl)G.rl=v.rl;if(v.open)G.open=v.open;
+  if(d.s){const v=JSON.parse(d.s);G.t=v.t;G.tk=v.tk;G.d=v.d;G.st=v.st;G.ml=v.ml;if(v.rl)G.rl=v.rl;if(v.open)G.open=v.open;if(v.lv){G.lives=v.lv;drawPC()}if(v.out!=null)G.lifeOut=v.out;
     $('dnum').textContent=v.d||'';$('msg').textContent=v.msg||'';render();if(v.ck&&v.rem&&G.t!==G.my){stopClock();hideRR();startClock(v.rem,v.ck,null)}else if(!(v.ck&&G.t===G.my)){stopClock();hideRR()}if(v.st==='over')finish(v.w)}
 }
 function push(o={}){
   if(!G||!G.online)return;
-  const v={t:G.t,tk:G.tk,d:G.d,st:G.st,ml:G.ml||[],msg:$('msg').textContent,rl:G.rl,open:G.open,...o};
+  const v={t:G.t,tk:G.tk,d:G.d,st:G.st,ml:G.ml||[],msg:$('msg').textContent,rl:G.rl,open:G.open,lv:G.lives,...o};
   updateDoc(doc(db,'rooms',G.online),{s:JSON.stringify(v),v:Date.now()}).catch(()=>{});
 }
 function leaveRoom(){stopClock();hideRR();
