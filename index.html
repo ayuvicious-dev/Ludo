@@ -51,13 +51,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .tk{position:absolute;width:5.6%;height:5.6%;border-radius:50%;transform:translate(-50%,-50%);border:2.5px solid #fff;box-shadow:0 2px 5px #0006;transition:left .28s,top .28s;z-index:2}
 .tk::after{content:"";position:absolute;left:22%;top:16%;width:34%;height:26%;border-radius:50%;background:#fff6}
 .tk.can{z-index:6;cursor:pointer;animation:pl .55s infinite alternate}
+.tk.six::before{content:"";position:absolute;inset:-48%;border-radius:50%;border:3px solid #facc15;box-shadow:0 0 0 2px #1f2937,inset 0 0 0 2px #1f2937;pointer-events:none}
 @keyframes pl{to{transform:translate(-50%,-50%) scale(1.3)}}
 .ctl{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:16px}
 #dice{width:84px;height:84px;padding:0;border-radius:22px;background:#fff;border:3px solid var(--line);box-shadow:0 5px 0 var(--line);display:grid;place-items:center}
 #dice img{width:66px;height:66px;display:block}
 #dice b{position:absolute;font-size:1.6rem;color:var(--pri2);text-shadow:0 0 6px #fff,0 0 6px #fff}
 #dice{position:relative}
-#dice.roll img{animation:rl .5s linear}
+#dice.roll img{animation:rl 1s linear}
 @keyframes rl{to{transform:rotate(540deg) scale(.85)}}
 #msg{font-weight:700;min-width:150px}
 .turn{display:flex;align-items:center;gap:8px;font-weight:800}
@@ -100,7 +101,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #dice .pips{display:none}
 #dice.cd .pips{display:grid}
 #dice.cd img,#dice.cd b{display:none}
-#dice.roll .pips{animation:rl .5s linear}
+#dice.roll .pips{animation:rl 1s linear}
 .pd{width:54px;height:54px;padding:8px;gap:2px;border-radius:15px}
 .pd i{max-width:8px;max-height:8px}
 /* ---- Kartu pilihan di tab Mode ---- */
@@ -150,6 +151,11 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
 .pcoin{font-size:.66rem;font-weight:800;color:var(--mut);line-height:1.3;text-align:center;white-space:nowrap}
 .pn2{font-size:.72rem;font-weight:700;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ds{width:68px;height:68px;flex:none}
+/* ---- Spin koin ---- */
+.wheelw{position:relative;width:min(72vw,260px);margin:18px auto 16px}
+.wheelw svg{display:block;width:100%;filter:drop-shadow(0 6px 10px rgba(20,50,110,.3));transition:transform 4s cubic-bezier(.17,.67,.2,1)}
+.wheelw .ptr{position:absolute;left:50%;top:-8px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid var(--ink);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+@media(prefers-reduced-motion:reduce){.wheelw svg{transition-duration:.01s}}
 #dice{width:68px;height:68px;border-radius:18px}#dice img{width:52px;height:52px}
 </style>
 </head>
@@ -189,6 +195,22 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
     <div class="row" style="margin-top:10px;flex-wrap:nowrap"><input id="fcode" placeholder="Kode teman" maxlength="6" style="margin:0;text-transform:uppercase"><button id="fadd" style="flex:none">Tambah</button></div>
     <div class="err" id="fmsg"></div>
   </div>
+  <div class="card" style="text-align:center">
+    <h2>Spin Koin</h2>
+    <small style="color:var(--mut)">Putar roda dan menangkan koin. Maksimal 5x sehari.</small>
+    <div class="wheelw"><i class="ptr"></i><svg id="wheel" viewBox="-100 -100 200 200" aria-label="Roda spin koin"></svg></div>
+    <button id="bspin" style="min-width:160px">Putar</button>
+    <div id="spinres" style="font-weight:800;min-height:1.4em;margin-top:10px"></div>
+    <div id="spinmsg" style="color:var(--mut);font-size:.9rem"></div>
+  </div>
+  <div class="card" style="text-align:center">
+    <h2>Spin Berlian 💎</h2>
+    <small style="color:var(--mut)">Putar roda dan menangkan berlian. Maksimal 5x sehari.</small>
+    <div class="wheelw"><i class="ptr"></i><svg id="wheel2" viewBox="-100 -100 200 200" aria-label="Roda spin berlian"></svg></div>
+    <button id="bspin2" style="min-width:160px">Putar</button>
+    <div id="spinres2" style="font-weight:800;min-height:1.4em;margin-top:10px"></div>
+    <div id="spinmsg2" style="color:var(--mut);font-size:.9rem"></div>
+  </div>
   <div id="ilist"></div>
   <div class="card"><h2>Taruhan ajakan</h2><div class="betbox"></div></div>
   <div class="card"><h2>Daftar teman</h2><div class="lb" id="flist">Belum ada teman. Bagikan kodemu atau masukkan kode temanmu.</div></div>
@@ -209,7 +231,7 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
   <div class="card">
     <div style="display:flex;align-items:center;gap:14px">
       <div class="av" id="uav" style="width:72px;height:72px;border-radius:50%;font-size:2rem;background:var(--pri);border-color:var(--pri);flex:none"></div>
-      <div style="min-width:0"><b id="uname" style="font-size:1.2rem;word-break:break-word">-</b><br><small id="uemail" style="color:var(--mut);word-break:break-all"></small></div>
+      <div style="min-width:0"><b id="uname" style="font-size:1.2rem;word-break:break-word">-</b><br><small id="uemail" style="color:var(--mut);word-break:break-all"></small><div style="margin-top:6px;font-weight:800;font-size:.95rem">🪙 <span class="wc">0</span> &nbsp;·&nbsp; 💎 <span class="wd">0</span></div></div>
     </div>
     <p id="ustat" style="margin:12px 0 8px"></p>
       <div class="row"><button class="sm" id="bphoto">Ganti foto</button><button class="sm alt" id="bphoto0">Hapus foto</button></div>
@@ -239,6 +261,8 @@ button.opt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
   <div class="board" id="board"></div>
   <div class="pls bot"><div class="pl" id="pl3"></div><div class="pl r" id="pl2"></div></div>
   <div class="ctl" id="ctl"><button id="dice" aria-label="Lempar dadu"><img data-i="dice" alt=""><span class="pips" id="pips"></span><b id="dnum"></b></button><div id="msg"></div></div>
+  <div id="clk" style="text-align:center;font-weight:800;min-height:1.4em;margin-top:8px;color:var(--pri2)"></div>
+  <div id="rrbox" style="display:none;justify-content:center;gap:10px;margin-top:8px"><button id="brr" class="alt">🕒 <b id="rrt">3</b> · Kocok lagi (1 💎)</button><button id="bkeep">Lanjut</button></div>
   <div id="mode" style="text-align:center;color:var(--mut);margin-top:12px;font-size:.9rem"></div>
   <div id="gbet" style="text-align:center;color:var(--mut);margin-top:6px;font-size:.9rem;font-weight:700"></div>
 </section>
@@ -276,13 +300,14 @@ document.querySelectorAll('#nav [data-t]').forEach(b=>b.onclick=()=>{show(b.data
 
 const START_COINS=100000,START_DIA=100;
 let unsubOpp=null;
+let spinReady=false;
 let me=null,hasSave=false,myName='',myCode='',myPhoto='',myCoins=0,myDia=0,FR=[],INV=[],unsub=[],unsubRoom=null;
 onAuthStateChanged(auth,async u=>{
-  me=u;unsub.forEach(f=>f());unsub=[];
+  me=u;unsub.forEach(f=>f());unsub=[];spinReady=false;SP.forEach(x=>{x.st.d='';x.st.n=0});
   if(!u){show('auth');return}
   let name=u.displayName||u.email.split('@')[0],photo=u.photoURL||'',coins=null,dia=null,readOk=false;
-  try{const s0=(await getDoc(doc(db,'users',u.uid))).data();readOk=true;if(s0){if(s0.name)name=s0.name;if(typeof s0.photo==='string')photo=s0.photo;if(typeof s0.coins==='number')coins=s0.coins;if(typeof s0.diamonds==='number')dia=s0.diamonds}}catch(e){}
-  const gc=readOk&&coins===null,gd=readOk&&dia===null; // bonus pertama kali login
+  try{const s0=(await getDoc(doc(db,'users',u.uid))).data();readOk=true;if(s0){if(s0.name)name=s0.name;if(typeof s0.photo==='string')photo=s0.photo;if(typeof s0.coins==='number')coins=s0.coins;if(typeof s0.diamonds==='number')dia=s0.diamonds;SP.forEach(x=>{if(typeof s0[x.fD]==='string'){x.st.d=s0[x.fD];x.st.n=+s0[x.fN]||0}})}}catch(e){}
+  const gc=readOk&&coins===null,gd=readOk&&dia===null; spinReady=readOk;// bonus pertama kali login
   myCoins=readOk?(gc?START_COINS:coins):0;myDia=readOk?(gd?START_DIA:dia):0;drawWallet();
   myName=name;myPhoto=photo;myCode=u.uid.slice(0,6).toUpperCase();$('mycode').textContent=myCode;
   $('uemail').textContent=u.email||'';drawProfile();$('pmsg').textContent='';
@@ -293,7 +318,7 @@ onAuthStateChanged(auth,async u=>{
     hasSave=(await getDoc(doc(db,'users',u.uid,'private','save'))).exists();
   }catch(e){$('ustat').textContent='Data belum bisa dimuat (cek Rules Firestore)'}
   
-  watch();show('menu');loadLB();
+  watch();show('menu');loadLB();SP.forEach(drawSpin);
   if(gc||gd)toast('Selamat datang! Bonus 100.000 koin dan 100 berlian 🎁');
 });
 /* ---------- PROFIL ---------- */
@@ -367,11 +392,51 @@ function gbet(){
   const e=$('gbet');if(!e)return;
   if(!G){e.textContent='';return}
   const a=G.bet>0?`Taruhan ${fmt(G.bet)} · Hadiah ${fmt(G.pot)} 🪙`:'';
-  const b=G.two?(myDia>0?`1 lempar = 1 💎 (sisa ${fmt(myDia)})`:'Berlian habis: 1 lempar per giliran'):'';
+  const b=G.two?(myDia>0?`1 lempar = 1 💎 (sisa ${fmt(myDia)})`:'Berlian habis: 1 lempar per giliran'):G.quick?(myDia>0?`Kocok ulang = 1 💎 (sisa ${fmt(myDia)})`:'Berlian habis: tidak bisa kocok ulang'):'';
   e.textContent=[a,b].filter(Boolean).join('  ·  ');
 }
 async function loadLB(){}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- SPIN KOIN & BERLIAN ---------- */
+const SPIN_MAX=5;
+const SP=[
+  {id:'',vals:[1000,0,10000,0,100000,0,1000000,0],lab:{0:'0',1000:'1 rb',10000:'10 rb',100000:'100 rb',1000000:'1 jt'},col:{0:'#94a3b8',1000:'#22c55e',10000:'#3b82f6',100000:'#8b5cf6',1000000:'#f59e0b'},fD:'spinDay',fN:'spinN',inc:'coins',unit:'koin',award:p=>{myCoins+=p},st:{d:'',n:0,rot:0,busy:false}},
+  {id:'2',vals:[10,0,100,0,1000,0,10000,0],lab:{0:'0',10:'10',100:'100',1000:'1 rb',10000:'10 rb'},col:{0:'#94a3b8',10:'#06b6d4',100:'#3b82f6',1000:'#8b5cf6',10000:'#ec4899'},fD:'spinDiaDay',fN:'spinDiaN',inc:'diamonds',unit:'berlian 💎',award:p=>{myDia+=p},st:{d:'',n:0,rot:0,busy:false}}
+];
+const dayKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const spinLeft=x=>Math.max(0,SPIN_MAX-(x.st.d===dayKey()?x.st.n:0));
+function buildWheel(x){
+  const pt=(a,r)=>{const t=a*Math.PI/180;return (r*Math.sin(t)).toFixed(2)+' '+(-r*Math.cos(t)).toFixed(2)};
+  let h='';
+  x.vals.forEach((v,i)=>{const a0=i*45,a1=a0+45,mid=a0+22.5;
+    h+=`<path d="M0 0L${pt(a0,96)}A96 96 0 0 1 ${pt(a1,96)}Z" fill="${x.col[v]}" stroke="#fff" stroke-width="2"/>`;
+    h+=`<text transform="rotate(${mid}) translate(0,-66)" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="800" fill="#fff" font-family="inherit">${x.lab[v]}</text>`});
+  h+='<circle r="12" fill="#fff" stroke="#cfe0f7" stroke-width="3"/>';
+  $('wheel'+x.id).innerHTML=h;
+}
+function drawSpin(x){
+  const l=spinLeft(x);
+  $('spinmsg'+x.id).textContent=!spinReady?'Data belum bisa dimuat (cek Rules Firestore).':l>0?`Sisa putaran hari ini: ${l} dari ${SPIN_MAX}`:'Putaran hari ini habis. Kembali lagi besok!';
+  $('bspin'+x.id).disabled=x.st.busy||!spinReady||l<1;
+}
+function doSpin(x){
+  if(!me||x.st.busy||!spinReady||spinLeft(x)<1)return;
+  const today=dayKey(),n=(x.st.d===today?x.st.n:0)+1,k=Math.floor(Math.random()*x.vals.length),prize=x.vals[k];
+  x.st.d=today;x.st.n=n;x.st.busy=true;$('spinres'+x.id).textContent='';drawSpin(x);
+  // hasil & jumlah putaran langsung disimpan, jadi refresh tidak mengembalikan jatah
+  setDoc(doc(db,'users',me.uid),{[x.fD]:today,[x.fN]:n,...(prize?{[x.inc]:increment(prize)}:{})},{merge:true}).catch(()=>toast('Gagal menyimpan hasil spin. Cek koneksi.'));
+  const jit=Math.random()*30-15,tgt=((360-(k*45+22.5)+jit)%360+360)%360;
+  x.st.rot=x.st.rot-(x.st.rot%360)+360*5+tgt;
+  $('wheel'+x.id).style.transform=`rotate(${x.st.rot}deg)`;
+  setTimeout(()=>{
+    x.st.busy=false;
+    if(prize){x.award(prize);drawWallet();toast(`Kamu dapat ${fmt(prize)} ${x.unit}! 🎉`)}
+    $('spinres'+x.id).textContent=prize?`Kamu dapat ${fmt(prize)} ${x.unit}! 🎉`:'Yah, dapat 0. Coba lagi!';
+    drawSpin(x);
+  },4200);
+}
+SP.forEach(x=>{$('bspin'+x.id).onclick=()=>doSpin(x);buildWheel(x)});
 
 /* ---------- TEMA ---------- */
 function applyTheme(m){
@@ -390,7 +455,7 @@ applyTheme(tm);
 const COL=['#ef4444','#22c55e','#eab308','#3b82f6'],CN=['Merah','Hijau','Kuning','Biru'];
 const COLORS={2:[3,1],3:[3,0,1],4:[3,0,1,2]}; // kursi 0 = kamu (Biru). Game Tim: Biru+Hijau lawan Merah+Kuning
 const cfg={tb:[false,true,true,true],cn:2,on:2,mode:'classic',bet:0};
-const MODES=[['classic','Classic','Semua pion harus masuk base untuk menang'],['kill','1 Kill Win','Pemain pertama yang menendang pion lawan langsung menang'],['quick','Quick','Pintu utama terkunci sampai kamu menendang. Satu pion sampai base = menang. Lempar dadu 2x'],['popular','Popular','Lempar dadu 2x per giliran. Semua pion harus masuk base untuk menang']];
+const MODES=[['classic','Classic','Semua pion harus masuk base untuk menang'],['kill','1 Kill Win','Pemain pertama yang menendang pion lawan langsung menang'],['quick','Quick','Pintu utama terkunci sampai kamu menendang. Satu pion sampai base = menang. Boleh kocok ulang 1x (1 berlian, pilih dalam 3 detik). Waktu jalan pion 7 detik'],['popular','Popular','Lempar dadu 2x per giliran. Semua pion harus masuk base untuk menang']];
 const MN=Object.fromEntries(MODES.map(m=>[m[0],[m[1],m[2]]]));
 function drawModes(){const h=MODES.map(([k,t,d])=>`<button class="opt${cfg.mode===k?' sel':''}" data-k="${k}">${t}<small>${d}</small></button>`).join('');['modes','modes2'].forEach(id=>$(id).innerHTML=h)}
 ['modes','modes2'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('[data-k]');if(b){cfg.mode=b.dataset.k;drawModes()}});drawModes();
@@ -444,7 +509,7 @@ function buildPanels(){
   drawPC();
 }
 function startGame(){
-  buildBoard();buildPanels();tks=[];
+  stopClock();hideRR();buildBoard();buildPanels();tks=[];
   G.seats.forEach((st,s)=>{tks[s]=[];for(let i=0;i<4;i++){const e=document.createElement('div');e.className='tk';styleTk(e,COL[st.c]);e.onclick=()=>pick(s,i);B.appendChild(e);tks[s][i]=e}});
   $('win').classList.remove('on');show('game');render();gbet();
   if(G.seats[G.t].bot)setTimeout(roll,700);
@@ -455,10 +520,10 @@ function render(){
   G.seats.forEach((st,s)=>G.tk[s].forEach((p,i)=>{
     const[x,y]=pos(st.c,p,i),k=x+','+y,n=seen[k]=(seen[k]||0)+1;
     const e=tks[s][i];e.style.left=pct(x+(n-1)*.16);e.style.top=pct(y-(n-1)*.16);
-    e.classList.toggle('can',s===t&&G.st==='move'&&!st.bot&&(!G.online||s===G.my)&&G.ml.includes(i));
+    const cn=s===t&&G.st==='move'&&!st.bot&&(!G.online||s===G.my)&&G.ml.includes(i);e.classList.toggle('can',cn);e.classList.toggle('six',cn&&G.d===6);
   }));
   $('tdot').style.background=COL[col(t)];$('tname').textContent='Giliran: '+G.seats[t].name+(G.two?` (lempar ${3-G.rl}/2)`:'');
-  $('mode').textContent=G.mode?MN[G.mode][0]+' · '+MN[G.mode][1]+(G.mode==='quick'?(G.open[G.my]?' · pintumu terbuka':' · pintumu terkunci'):''):'';
+  $('mode').textContent='';
   [0,1,2,3].forEach(c=>$('pl'+c).classList.toggle('on',c===col(t)));
   const ds=$('pl'+col(t)).querySelector('.ds');if(ds&&$('dice').parentNode!==ds)ds.appendChild($('dice'));
   $('dice').disabled=!(G.st==='roll'&&!G.seats[t].bot&&(!G.online||t===G.my));
@@ -470,13 +535,44 @@ function roll(){
   setTimeout(()=>{
     dv.classList.remove('roll');busy=false;
     G.d=1+Math.floor(Math.random()*6);$('dnum').textContent=G.d;
-    G.ml=moves(G.t,G.d);G.st='move';
-    if(!G.ml.length){$('msg').textContent=`Dapat ${G.d}. Tidak ada langkah.`;G.st='wait';render();push();return setTimeout(()=>next(false),1000)}
-    $('msg').textContent=`Dapat ${G.d}.`+(G.seats[G.t].bot?'':' Pilih bidak.');
-    render();push();
-    if(G.seats[G.t].bot)setTimeout(()=>move(bot()),700);
-    else if(G.ml.length===1)setTimeout(()=>move(G.ml[0]),450);
-  },520);
+    G.ml=moves(G.t,G.d);
+    if(G.quick&&!G.rrUsed&&!G.seats[G.t].bot&&myDia>0){ // Quick: boleh kocok ulang 1x (1 berlian), 3 detik untuk memutuskan
+      G.st='dec';$('msg').textContent=`Dapat ${G.d}. Kocok lagi?`;render();push({ck:'dec',rem:3000});
+      showRR();startClock(3000,'dec',()=>decide(false));return;
+    }
+    afterRoll();
+  },1000);
+}
+function afterRoll(){
+  hideRR();
+  const bt=G.seats[G.t].bot;
+  if(!G.ml.length){$('msg').textContent=`Dapat ${G.d}. Tidak ada langkah.`;G.st='wait';render();push();return setTimeout(()=>next(false),1000)}
+  G.st='move';$('msg').textContent=`Dapat ${G.d}.`+(bt?'':' Pilih bidak.');render();
+  if(bt){push();return setTimeout(()=>move(bot()),700)}
+  if(G.ml.length===1){push();return setTimeout(()=>move(G.ml[0]),450)}
+  if(G.quick){ // Quick: 7 detik untuk memilih & memindahkan pion
+    const t0=G.t;push({ck:'mv',rem:7000});
+    startClock(7000,'mv',()=>{if(G&&G.st==='move'&&G.t===t0){toast('Waktu habis! Bidak digerakkan otomatis.');move(bot())}});
+  }else push();
+}
+function decide(again){
+  if(!G||G.st!=='dec')return;
+  stopClock();hideRR();
+  if(!again||myDia<=0)return afterRoll();
+  G.rrUsed=true;addDia(-1);G.st='roll';render();push();roll();
+}
+$('brr').onclick=()=>decide(true);$('bkeep').onclick=()=>decide(false);
+let clkI=null,clkEnd=0;
+function showRR(){$('rrbox').style.display='flex'}
+function hideRR(){$('rrbox').style.display='none'}
+function stopClock(){clearInterval(clkI);clkI=null;$('clk').textContent=''}
+function startClock(ms,kind,onEnd){
+  stopClock();clkEnd=Date.now()+ms;
+  const lab=kind==='dec'?'Kocok lagi?':'Pilih bidak';
+  const tick=()=>{const left=Math.max(0,clkEnd-Date.now()),n=Math.ceil(left/1000);
+    $('clk').textContent=`🕒 ${n} · ${lab}`;$('rrt').textContent=n;
+    if(left<=0){stopClock();if(onEnd)onEnd()}};
+  tick();clkI=setInterval(tick,200);
 }
 $('dice').onclick=roll;
 function pick(s,i){if(G&&G.st==='move'&&s===G.t&&!G.seats[s].bot&&(!G.online||s===G.my)&&G.ml.includes(i))move(i)}
@@ -491,7 +587,7 @@ function bot(){
   });return best;
 }
 function move(i){
-  if(G.st!=='move')return;G.st='wait';
+  if(G.st!=='move')return;stopClock();hideRR();G.st='wait';
   const s=G.t,d=G.d,p=G.tk[s][i],np=p===-1?0:p+d;let cap=false;
   G.tk[s][i]=np;
   if(np<=50){const a=abs(s,np);if(!SAFE.has(a))G.seats.forEach((_,o)=>{if(o!==s)G.tk[o].forEach((q,j)=>{if(q>=0&&q<=50&&abs(o,q)===a){G.tk[o][j]=-1;cap=true;if(G.open)G.open[s]=true}})})}
@@ -501,7 +597,7 @@ function move(i){
   push(won?{st:'over',w:s}:{});
   setTimeout(()=>won?finish(s):next(d===6||cap||np===56),600);
 }
-function next(extra){
+function next(extra){G.rrUsed=false;
   if(!extra){if(G.two&&G.rl>1)G.rl--;else{G.t=(G.t+1)%G.seats.length;G.rl=2}}
   if(G.team)for(let k=0;k<4&&G.tk[G.t].every(v=>v===56);k++)G.t=(G.t+1)%G.seats.length;
   G.st='roll';G.ml=[];render();save();push();
@@ -512,7 +608,7 @@ function next(extra){
 const saveRef=()=>doc(db,'users',me.uid,'private','save');
 function save(){}
 async function finish(s){
-  if(G.done)return;G.done=true;G.st='over';const w=G.seats[s],my=G.my||0,mine=G.team?s%2===my%2:s===my;
+  if(G.done)return;G.done=true;G.st='over';stopClock();hideRR();const w=G.seats[s],my=G.my||0,mine=G.team?s%2===my%2:s===my;
   $('wt').textContent=mine?(G.team?'Timmu menang! 🎉':'Kamu menang! 🎉'):(G.team?'Tim lawan menang!':`${w.name} menang!`);
   $('ws').textContent=mine?'Kemenangan tercatat di papan peringkat.':'Coba lagi untuk membalas.';
   if(G.bet>0&&G.staked){if(mine){addCoins(G.pot);$('ws').textContent=`Hadiah ${fmt(G.pot)} koin masuk ke dompetmu. 🎉`}else $('ws').textContent=`Taruhan ${fmt(G.bet)} koin hilang.`}
@@ -592,7 +688,7 @@ let matchTimer=null;
 const MATCH_WAIT=6000; // detik tunggu lawan asli sebelum diganti bot
 function botGame(){
   newGame({n:2,bots:[false,true]});
-  G.mode=cfg.mode;G.two=cfg.mode==='quick'||cfg.mode==='popular';G.rl=2;G.open=[false,false];
+  G.mode=cfg.mode;G.two=cfg.mode==='popular';G.quick=cfg.mode==='quick';G.rl=2;G.open=[false,false];
   G.seats[1].name='Bot';buildPanels();render();
   setBet(cfg.bet,2);takeStake();gbet();
 }
@@ -635,11 +731,11 @@ async function quickMatch(){
 }
 function startOnline(id,my,names,wait,mode='classic',photos=[],bet=0){
   if(unsubRoom)unsubRoom();
-  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],t:0,tk:[[-1,-1,-1,-1],[-1,-1,-1,-1]],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:mode==='quick'||mode==='popular',rl:2,open:[false,false],bet,pot:bet*2,staked:false};
+  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],t:0,tk:[[-1,-1,-1,-1],[-1,-1,-1,-1]],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:mode==='popular',quick:mode==='quick',rl:2,open:[false,false],bet,pot:bet*2,staked:false};
   startGame();if(!wait)takeStake();gbet();$('dnum').textContent='';$('msg').textContent=wait?(names[1]==='Lawan'?'Mencari lawan…':`Menunggu ${names[1]}…`):'';
   unsubRoom=onSnapshot(doc(db,'rooms',id),onRoom);
 }
-function end(t,s){if(G)G.st='over';$('wt').textContent=t;$('ws').textContent=s;$('win').classList.add('on')}
+function end(t,s){stopClock();hideRR();if(G)G.st='over';$('wt').textContent=t;$('ws').textContent=s;$('win').classList.add('on')}
 function onRoom(snap){
   if(!G||!G.online||snap.metadata.hasPendingWrites)return;
   const d=snap.data();if(!d)return;
@@ -653,14 +749,14 @@ function onRoom(snap){
     return end('Lawan keluar','Pertandingan dihentikan.');
   }
   if(d.s){const v=JSON.parse(d.s);G.t=v.t;G.tk=v.tk;G.d=v.d;G.st=v.st;G.ml=v.ml;if(v.rl)G.rl=v.rl;if(v.open)G.open=v.open;
-    $('dnum').textContent=v.d||'';$('msg').textContent=v.msg||'';render();if(v.st==='over')finish(v.w)}
+    $('dnum').textContent=v.d||'';$('msg').textContent=v.msg||'';render();if(v.ck&&v.rem&&G.t!==G.my){stopClock();hideRR();startClock(v.rem,v.ck,null)}else if(!(v.ck&&G.t===G.my)){stopClock();hideRR()}if(v.st==='over')finish(v.w)}
 }
 function push(o={}){
   if(!G||!G.online)return;
   const v={t:G.t,tk:G.tk,d:G.d,st:G.st,ml:G.ml||[],msg:$('msg').textContent,rl:G.rl,open:G.open,...o};
   updateDoc(doc(db,'rooms',G.online),{s:JSON.stringify(v),v:Date.now()}).catch(()=>{});
 }
-function leaveRoom(){
+function leaveRoom(){stopClock();hideRR();
   clearTimeout(matchTimer);matchTimer=null;
   if(unsubOpp){unsubOpp();unsubOpp=null}
   if(unsubRoom){unsubRoom();unsubRoom=null}
