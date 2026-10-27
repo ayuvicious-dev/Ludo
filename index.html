@@ -115,7 +115,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 button.dopt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--bg);color:var(--ink);border:2px solid var(--line);box-shadow:none;padding:12px 6px;border-radius:16px;font-size:.85rem;transform:none}
 button.dopt.sel{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
 @media(prefers-reduced-motion:reduce){.tk,#dice img{animation:none!important;transition:none}}
-#cbov,#pgov,#dpv{z-index:1100}
+#cbov,#pgov,#npov,#gtov,#dpv{z-index:1100}
 #pvb .tk{pointer-events:none}
 #cbcoin{display:inline-block;font-size:64px;line-height:1;margin-bottom:6px}
 #cbcoin.spin{animation:cbflip 1.8s cubic-bezier(.2,.7,.3,1)}
@@ -323,6 +323,8 @@ body:has(#game.on){overflow:hidden}
 </section>
 
 <div class="ov" id="pgov"><div class="card"><h2>Popular</h2><p>Berapa kali lempar dadu setiap giliran?</p><button data-n="2" style="width:100%;margin-bottom:10px">2 Lemparan</button><button data-n="4" style="width:100%;margin-bottom:10px">4 Lemparan</button><button id="pgx" class="alt sm" style="width:100%">Batal</button></div></div>
+<div class="ov" id="gtov"><div class="card"><h2>Tipe Game</h2><p>Pilih tipe permainan.</p><button data-g="normal" style="width:100%;margin-bottom:10px">Normal Game</button><button data-g="lucky" style="width:100%;margin-bottom:10px">Lucky Game</button><button id="gtx" class="alt sm" style="width:100%">Batal</button></div></div>
+<div class="ov" id="npov"><div class="card"><h2>Jumlah Pion</h2><p>Berapa pion untuk setiap pemain?</p><button data-n="4" style="width:100%;margin-bottom:10px">4 Pion</button><button data-n="6" style="width:100%;margin-bottom:10px">6 Pion</button><button data-n="9" style="width:100%;margin-bottom:10px">9 Pion</button><button id="npx" class="alt sm" style="width:100%">Batal</button></div></div>
 <div class="ov" id="dpv"><div class="card" style="max-width:360px"><h2 id="dpt"></h2><div class="board" id="pvb" style="width:min(70vw,300px);margin:0 auto 14px"></div><button id="dpuse" style="width:100%;margin-bottom:10px">Pakai desain ini</button><button id="dpx" class="alt sm" style="width:100%">Tutup</button></div></div>
 <div class="ov" id="cbov"><div class="card"><div id="cbcoin" aria-hidden="true">🪙</div><h2 id="cbt"></h2><p id="cbs"></p><button id="bcbx" class="alt">Batalkan</button></div></div>
 <div class="ov" id="win"><div class="card"><img class="logo" style="width:120px" data-i="dice" alt=""><h2 id="wt"></h2><p id="ws"></p><button id="bwin">Kembali ke menu</button></div></div>
@@ -512,7 +514,22 @@ applyTheme(tm);
 /* ---------- MENU ---------- */
 const COL=['#ef4444','#22c55e','#eab308','#3b82f6'],CN=['Merah','Hijau','Kuning','Biru'];
 const COLORS={2:[3,1],3:[3,0,1],4:[3,0,1,2]}; // kursi 0 = kamu (Biru). Game Tim: Biru+Hijau lawan Merah+Kuning
-const cfg={tb:[false,true,true,true],cn:2,on:2,mode:'classic',bet:0};
+const cfg={tb:[false,true,true,true],cn:2,lucky:false,on:2,mode:'classic',bet:0,np:4};
+try{const v=+localStorage.getItem('ludo-np');if([4,6,9].includes(v))cfg.np=v}catch(e){}
+/* pop-up pilihan jumlah pion (muncul setelah memilih jenis game) */
+let npCb=null,npNo=null;
+const withNp=cb=>cb(cfg.np);
+/* pop-up tipe game: Normal / Lucky (muncul setelah memilih jenis game) */
+let gtCb=null,gtNo=null;
+function askType(cb,no){gtCb=cb;gtNo=no||null;$('gtov').classList.add('on')}
+$('gtov').onclick=e=>{const b=e.target.closest('button[data-g]');
+  if(b){const f=gtCb;cfg.lucky=b.dataset.g==='lucky';$('gtov').classList.remove('on');gtCb=null;gtNo=null;if(f)f()}
+  else if(e.target.id==='gtov'||e.target.id==='gtx'){$('gtov').classList.remove('on');gtCb=null;const c=gtNo;gtNo=null;if(c)c()}};
+function setLucky(){G.lucky=!!cfg.lucky;if(G.lucky)toast('Lucky Game: semoga beruntung!')}
+function askNp(cb,no){npCb=cb;npNo=no||null;document.querySelectorAll('#npov button[data-n]').forEach(b=>b.classList.toggle('alt',+b.dataset.n!==cfg.np));$('npov').classList.add('on')}
+$('npov').onclick=e=>{const b=e.target.closest('button[data-n]');
+  if(b){const f=npCb,n=+b.dataset.n;cfg.np=n;try{localStorage.setItem('ludo-np',n)}catch(x){}$('npov').classList.remove('on');npCb=null;if(f)f(n)}
+  else if(e.target.id==='npov'||e.target.id==='npx'){$('npov').classList.remove('on');npCb=null;const c=npNo;npNo=null;if(c)c()}};
 /* pop-up pilihan jumlah lemparan Popular */
 let popCb=null;
 function askPop(cb){popCb=cb;$('pgov').classList.add('on')}
@@ -523,9 +540,9 @@ const MN=Object.fromEntries(MODES.map(m=>[m[0],[m[1],m[2]]]));
 MN.popular=['Popular 2 Lempar','Lempar dadu 2x per giliran. Semua pion harus masuk base untuk menang'];
 MN.popular4=['Popular 4 Lempar','Lempar dadu 4x per giliran. Semua pion harus masuk base untuk menang'];
 function drawModes(){const h=MODES.map(([k,t])=>`<button class="opt${(cfg.mode===k||(k==='popular'&&POP(cfg.mode)>0))?' sel':''}" data-k="${k}">${t}</button>`).join('');['modes','modes2'].forEach(id=>$(id).innerHTML=h)}
-['modes','modes2'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k,go=()=>{drawModes();if(id==='modes')onStep(2)};
-  if(k==='popular'){askPop(n=>{cfg.mode=n===4?'popular4':'popular';go()});return}
-  cfg.mode=k;go()});drawModes();
+['modes','modes2'].forEach(id=>$(id).onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k,go=m=>{const prev=cfg.mode;cfg.mode=m;drawModes();askNp(()=>{if(id==='modes')onStep(2)},()=>{cfg.mode=prev;drawModes()})};
+  if(k==='popular'){askPop(n=>go(n===4?'popular4':'popular'));return}
+  go(k)});drawModes();
 // Koin teman (dibaca realtime dari dokumen user masing-masing)
 const fcl=id=>typeof FC[id]==='number'?`<small style="display:block;color:var(--mut);font-weight:600">🪙 ${fmt(FC[id])} koin</small>`:'';
 function watchFC(){FR.forEach(f=>{if(FCW[f.id])return;FCW[f.id]=1;
@@ -536,21 +553,21 @@ function onStep(n){
   document.querySelectorAll('#menu .stp').forEach(e=>e.hidden=+e.dataset.s!==n);
   $('qmsg').textContent='';
   const inv=olPath==='invite',m=MN[cfg.mode][0],sl=document.querySelector(`#menu .stp[data-s="${n}"] .sl`);
-  if(n===2)sl.textContent=`Mode ${m}. Pilih cara bermain.`;
+  if(n===2){sl.textContent=`Mode ${m} · ${cfg.np} pion${cfg.lucky?' · Lucky Game':''}. Pilih cara bermain.`;$('bsr').textContent=cfg.lucky?'Main lawan bot':'Cari lawan'}
   const fn=(FR.find(x=>x.id===selFid)||{}).name||'';
-  if(n===3)sl.textContent=`Mode ${m} · Cari lawan. Pilih koin taruhan.`;
+  if(n===3){sl.textContent=`Mode ${m} · ${cfg.lucky?'Lawan bot (Lucky Game)':'Cari lawan'}. Pilih koin taruhan.`;$('bq').textContent=cfg.lucky?'Mulai main':'Mulai cari lawan'}
   if(n===4){sl.textContent=`Mode ${m} · Pilih teman yang ingin diundang.`;drawOl()}
   if(n===5)sl.textContent=`Undang ${fn}. Pilih koin taruhan.`;
   if(n===6){sl.textContent='Cek lagi sebelum mulai.';
     const row=(a,b)=>`<div class="seat"><span>${a}</span><b>${b}</b></div>`;
-    $('isum').innerHTML=row('Mode',esc(m))+row('Teman',esc(fn))+row('Taruhan',cfg.bet?fmt(cfg.bet)+' koin':'Tanpa taruhan');
+    $('isum').innerHTML=row('Mode',esc(m))+row('Pion',cfg.np+' pion')+row('Teman',esc(fn))+row('Taruhan',cfg.bet?fmt(cfg.bet)+' koin':'Tanpa taruhan');
   }
 }
 let selFid=null;
 $('bsr').onclick=()=>{olPath='search';onStep(3)};
 $('binv').onclick=()=>{olPath='invite';selFid=null;onStep(4)};
 $('bbet').onclick=()=>{if(!checkBet($('qmsg')))return;onStep(6)};
-$('binvgo').onclick=()=>invite(selFid,cfg.mode);
+$('binvgo').onclick=()=>invite(selFid,cfg.mode,cfg.lucky);
 document.addEventListener('click',e=>{const b=e.target.closest('#menu [data-back]');if(b)onStep(+b.dataset.back||+b.closest('.stp').dataset.s-1)});
 $('olist').onclick=e=>{const b=e.target.closest('button[data-id]');if(b){selFid=b.dataset.id;onStep(5)}};
 $('olist2').onclick=e=>{const b=e.target.closest('button[data-id]');if(b)invite(b.dataset.id,cfg.mode)};drawOl();
@@ -566,30 +583,33 @@ const START=[0,13,26,39],SAFE=new Set([...START,...START.map(s=>(s+8)%52)]);
 const HOME=[[[7,1],[7,2],[7,3],[7,4],[7,5]],[[1,7],[2,7],[3,7],[4,7],[5,7]],[[7,13],[7,12],[7,11],[7,10],[7,9]],[[13,7],[12,7],[11,7],[10,7],[9,7]]];
 const ORG=[[0,0],[0,9],[9,9],[9,0]],FIN=[[-.7,0],[0,-.7],[.7,0],[0,.7]];
 const pct=v=>(v/15*100)+'%';
-function pos(c,p,i){
-  if(p<0)return[ORG[c][1]+2+(i%2)*2,ORG[c][0]+2+(i>>1)*2];
+const yardArr=n=>Array(n).fill(-1),startArr=n=>[0,0,...Array(n-2).fill(-1)]; // pion di base / mode Quick (2 sudah di jalur)
+const yardXY=(i,n)=>n===9?[1.5+(i%3)*1.5,1.5+((i/3)|0)*1.5]:n===6?[1.5+(i%3)*1.5,2.25+((i/3)|0)*1.5]:[2+(i%2)*2,2+(i>>1)*2]; // posisi pion di base: 4=2x2, 6=3x2, 9=3x3
+function pos(c,p,i,n=4){
+  if(p<0){const[a,b]=yardXY(i,n);return[ORG[c][1]+a,ORG[c][0]+b]}
   if(p<=50){const[r,k]=P[(START[c]+p)%52];return[k+.5,r+.5]}
   if(p<=55){const[r,k]=HOME[c][p-51];return[k+.5,r+.5]}
   return[7.5+FIN[c][0]+i*.08,7.5+FIN[c][1]+i*.08];
 }
 const B=$('board');let tks=[];
-function boardHTML(){
+function boardHTML(n=4){
   let h='';
   ORG.forEach(([r,c],k)=>{h+=`<div class="base" style="left:${pct(c)};top:${pct(r)};background:${COL[k]}"><i></i></div>`;
-    [[2,2],[4,2],[2,4],[4,4]].forEach(([a,b])=>h+=`<div class="slot" style="left:${pct(c+a)};top:${pct(r+b)};background:${COL[k]}"></div>`)});
+    Array.from({length:n},(_,i)=>yardXY(i,n)).forEach(([a,b])=>h+=`<div class="slot" style="left:${pct(c+a)};top:${pct(r+b)};background:${COL[k]}"></div>`)});
   h+='<div class="mid"></div>';
   P.forEach(([r,c],i)=>{const si=START.indexOf(i);h+=`<div class="cell" style="left:${pct(c)};top:${pct(r)};${si>=0?'background:'+COL[si]:''}">${SAFE.has(i)&&si<0?'★':''}</div>`});
   HOME.forEach((a,k)=>a.forEach(([r,c])=>h+=`<div class="cell" style="left:${pct(c)};top:${pct(r)};background:${COL[k]}"></div>`));
   return h;
 }
-function buildBoard(){B.innerHTML=boardHTML()}
+function buildBoard(){B.innerHTML=boardHTML(G.np)}
 
 /* ---------- LOGIKA GAME ---------- */
 let G=null,busy=false;
 const col=s=>G.seats[s].c,abs=(s,p)=>(START[col(s)]+p)%52;
 function newGame(o){
   const seats=COLORS[o.n].map((c,s)=>({c,bot:s?o.bots[s]:false,name:s?CN[c]:(myName||'Kamu'),photo:s?'':myPhoto}));
-  G={seats,t:0,tk:seats.map(()=>[-1,-1,-1,-1]),d:0,st:'roll',team:!!o.team,lives:seats.map(()=>5)};startGame();
+  const np=o.np||cfg.np||4;
+  G={seats,np,t:0,tk:seats.map(()=>yardArr(np)),d:0,st:'roll',team:!!o.team,lives:seats.map(()=>5)};startGame();
 }
 function buildPanels(){
   $('ctl').appendChild($('dice'));$('gs').appendChild($('rrbox'));
@@ -603,15 +623,15 @@ function buildPanels(){
 }
 function startGame(){
   stopClock();hideRR();buildBoard();buildPanels();tks=[];
-  G.seats.forEach((st,s)=>{tks[s]=[];for(let i=0;i<4;i++){const e=document.createElement('div');e.className='tk';styleTk(e,COL[st.c]);e.onclick=()=>pick(s,i);B.appendChild(e);tks[s][i]=e}});
+  G.seats.forEach((st,s)=>{tks[s]=[];for(let i=0;i<G.np;i++){const e=document.createElement('div');e.className='tk';styleTk(e,COL[st.c]);e.onclick=()=>pick(s,i);B.appendChild(e);tks[s][i]=e}});
   $('win').classList.remove('on');show('game');render();gbet();
   if(G.seats[G.t].bot)setTimeout(roll,700);
 }
-function moves(s,d){return[0,1,2,3].filter(i=>{const p=G.tk[s][i];if(p===-1)return d===6;const n=p+d;return n<=56&&(G.mode!=='quick'||G.open[s]||n<=50)})}
+function moves(s,d){return Array.from({length:G.np},(_,i)=>i).filter(i=>{const p=G.tk[s][i];if(p===-1)return d===6;const n=p+d;return n<=56&&(G.mode!=='quick'||G.open[s]||n<=50)})}
 function render(){
   const seen={},t=G.t;
   G.seats.forEach((st,s)=>G.tk[s].forEach((p,i)=>{
-    const[x,y]=pos(st.c,p,i),k=x+','+y,n=seen[k]=(seen[k]||0)+1;
+    const[x,y]=pos(st.c,p,i,G.np),k=x+','+y,n=seen[k]=(seen[k]||0)+1;
     const e=tks[s][i];e.style.left=pct(x+(n-1)*.16);e.style.top=pct(y-(n-1)*.16);
     const cn=s===t&&(G.st==='move'||G.st==='dec')&&!st.bot&&(!G.online||s===G.my)&&G.ml.includes(i);e.classList.toggle('can',cn);e.classList.toggle('six',cn&&G.d===6);
   }));
@@ -694,7 +714,7 @@ function roll(){
   busy=true;SFX.roll();const dv=$('dice');dv.classList.add('roll');$('dnum').textContent='';$('msg').textContent='Mengocok…';
   setTimeout(()=>{
     dv.classList.remove('roll');busy=false;
-    G.d=1+Math.floor(Math.random()*6);$('dnum').textContent=G.d;SFX.land();
+    G.d=G.lucky?luckyDie(G.t):1+Math.floor(Math.random()*6);$('dnum').textContent=G.d;SFX.land();
     G.ml=moves(G.t,G.d);
     if(G.quick&&!G.rrUsed&&!G.seats[G.t].bot&&myDia>0){ // Quick: boleh kocok ulang 1x (1 berlian), 3 detik untuk memutuskan
       G.st='dec';$('msg').textContent=`Dapat ${G.d}.`;render();push({ck:'dec',rem:3000});
@@ -702,6 +722,26 @@ function roll(){
     }
     afterRoll();
   },1000);
+}
+/* Lucky Game: dadu pemain selalu menguntungkan, dadu bot jarang 6 dan tidak pernah memakan pion pemain */
+const fav=s=>G.team?s%2===0:s===0; // pihak yang diuntungkan (kamu, atau timmu)
+function luckyDie(s){
+  if(fav(s)){const sc=[];
+    for(let d=1;d<=6;d++){let b=-1;
+      moves(s,d).forEach(i=>{const p=G.tk[s][i],np=p===-1?0:p+d;let c=np*.1;if(p===-1)c+=30;if(np===56)c+=60;else if(np>=51)c+=20;
+        if(np<=50){const a=abs(s,np);G.seats.forEach((_,o)=>{if(!fav(o))G.tk[o].forEach(q=>{if(q>=0&&q<=50&&abs(o,q)===a&&!SAFE.has(a))c+=50})})}
+        b=Math.max(b,c)});
+      sc.push([d,b])}
+    if(G.l6)sc[5][1]=-1; // tidak 6 dua kali berturut-turut
+    sc.sort((x,y)=>y[1]-x[1]);
+    const top=sc.filter(x=>x[1]>=0).slice(0,3),pick=(Math.random()<.5||top.length<2)?(top[0]||sc[0]):top[Math.floor(Math.random()*top.length)];
+    G.l6=pick[0]===6;return pick[0]}
+  const hit=d=>moves(s,d).some(i=>{const p=G.tk[s][i],np=p===-1?0:p+d;if(np>50)return false;const a=abs(s,np);return !SAFE.has(a)&&G.seats.some((_,o)=>fav(o)&&G.tk[o].some(q=>q>=0&&q<=50&&abs(o,q)===a))});
+  const out=G.tk[s].some(v=>v>=0); // bot belum punya pion di jalur: peluang 6 lebih besar
+  let pool=[1,2,3,4,5];
+  if((G.seats.length<3||G.b6!==s)&&Math.random()<(out?.2:.4))pool.push(6); // bot keluar gantian: bot yang barusan dapat 6 menunggu giliran bot lain
+  pool=pool.filter(d=>!hit(d));if(!pool.length)pool=[1];
+  const d=pool[Math.floor(Math.random()*pool.length)];if(d===6)G.b6=s;return d;
 }
 function afterRoll(){
   hideRR();
@@ -785,17 +825,19 @@ async function finish(s){
   $('wt').textContent=mine?(G.team?'Timmu menang! 🎉':'Kamu menang! 🎉'):(G.team?'Tim lawan menang!':`${w.name} menang!`);
   $('ws').textContent=mine?'Kemenangan tercatat di papan peringkat.':'Coba lagi untuk membalas.';
   if(G.bet>0&&G.staked){if(mine){addCoins(G.pot);$('ws').textContent=`Hadiah ${fmt(G.pot)} koin masuk ke dompetmu. 🎉`}else $('ws').textContent=`Taruhan ${fmt(G.bet)} koin hilang.`}
+  if(G.lucky)$('ws').textContent=(mine?'Dadumu memang selalu beruntung! ':'Kali ini keberuntungan tidak berpihak. ')+((G.bet>0&&G.staked)?$('ws').textContent:'');
   if(G.lifeOut!=null)$('ws').textContent=`${G.seats[G.lifeOut].name} kehabisan nyawa. `+$('ws').textContent;
   $('win').classList.add('on');
   try{
     if(!G.online){await deleteDoc(saveRef());hasSave=false}
+    if(G.lucky)return;
     await setDoc(doc(db,'users',me.uid),{played:increment(1),wins:increment(mine?1:0)},{merge:true});
   }catch(e){}
 }
 async function go(o){newGame(o);if(hasSave){try{await deleteDoc(saveRef());hasSave=false}catch(e){}}}
-$('bcom').onclick=()=>{const m=$('cmsg');m.textContent='';if(!checkBet(m))return;const b=cfg.bet,n=cfg.cn;go({n,bots:[false,true,true,true]});setBet(b,n);takeStake();gbet()};
-$('boff').onclick=()=>go({n:cfg.on,bots:[false,false,false,false]});
-$('bteam').onclick=()=>go({n:4,bots:cfg.tb,team:true});
+$('bcom').onclick=()=>{const m=$('cmsg');m.textContent='';if(!checkBet(m))return;withNp(np=>{const b=cfg.bet,n=cfg.cn;go({n,np,bots:[false,true,true,true]});setLucky();setBet(b,n);takeStake();gbet()})};
+$('boff').onclick=()=>withNp(np=>go({n:cfg.on,np,bots:[false,false,false,false]}));
+$('bteam').onclick=()=>withNp(np=>{go({n:4,np,bots:cfg.tb,team:true});setLucky()});
 $('bq').onclick=()=>quickMatch();
 const toMenu=()=>{leaveRoom();$('win').classList.remove('on');if(G&&G.st!=='over'&&!G.online)hasSave=true;G=null;busy=false;show('menu');loadLB();
   getDoc(doc(db,'users',me.uid)).then(d=>{const s=d.data();$('ustat').textContent=`${s.played||0} main · ${s.wins||0} menang`}).catch(()=>{})};
@@ -885,7 +927,7 @@ async function acceptBet(inv){
 function drawFriends(){
   $('tabf').classList.toggle('dot',INV.length>0);drawCb();
   if($('olist').style.display!=='none')drawOl();
-  $('ilist').innerHTML=INV.map(i=>`<div class="card" style="border-color:var(--pri)"><b>${esc(i.from)}</b> ${i.kind==='coinbet'?'mengajakmu Taruhan Koin · '+fmt(i.bet)+' koin':'mengajakmu main online'+(i.mode&&MN[i.mode]?' ('+MN[i.mode][0]+')':'')+(i.bet?' · taruhan '+fmt(i.bet)+' koin':'')}<div class="row" style="margin-top:10px"><button data-a="yes" data-id="${i.id}">Terima</button><button class="alt" data-a="no" data-id="${i.id}">Tolak</button></div></div>`).join('');
+  $('ilist').innerHTML=INV.map(i=>`<div class="card" style="border-color:var(--pri)"><b>${esc(i.from)}</b> ${i.kind==='coinbet'?'mengajakmu Taruhan Koin · '+fmt(i.bet)+' koin':'mengajakmu main online'+(i.mode&&MN[i.mode]?' ('+MN[i.mode][0]+')':'')+(i.lucky?' · Lucky Game (dadu pengundang lebih beruntung)':'')+(i.bet?' · taruhan '+fmt(i.bet)+' koin':'')+' · '+(i.np||4)+' pion'}<div class="row" style="margin-top:10px"><button data-a="yes" data-id="${i.id}">Terima</button><button class="alt" data-a="no" data-id="${i.id}">Tolak</button></div></div>`).join('');
   $('flist').innerHTML=FR.length?FR.map(f=>`<div><span>${esc(f.name)}${fcl(f.id)}</span><button class="sm" data-a="play" data-id="${f.id}">Ajak main</button></div>`).join(''):'Belum ada teman. Bagikan kodemu atau masukkan kode temanmu.';
 }
 async function addFriend(){
@@ -901,17 +943,19 @@ async function addFriend(){
     $('fcode').value='';m.textContent=fn+' ditambahkan.';
   }catch(e){m.textContent='Gagal menambah teman. Cek Rules Firestore.'}
 }
-async function invite(fid,mode='classic'){
+async function invite(fid,mode='classic',lucky=false){
   const f=FR.find(x=>x.id===fid);if(!f)return;
   if(!checkBet($('fmsg'),$('qmsg'),$('qmsg2')))return;
   const bet=cfg.bet;
   if(bet>0&&typeof FC[fid]==='number'&&FC[fid]<bet){const t=`Koin ${f.name} tidak cukup untuk taruhan ini.`;[$('fmsg'),$('qmsg'),$('qmsg2')].forEach(e=>e.textContent=t);return}
+  withNp(async np=>{
   try{
     const r=doc(collection(db,'rooms'));
-    await setDoc(r,{host:me.uid,guest:fid,names:[myName,f.name],photos:[myPhoto,f.photo||''],status:'waiting',mode,bet,s:'',v:Date.now()});
-    await setDoc(doc(db,'users',fid,'invites',r.id),{from:myName,mode,bet,at:Date.now()});
-    startOnline(r.id,0,[myName,f.name],true,mode,[myPhoto,f.photo||''],bet);
+    await setDoc(r,{host:me.uid,guest:fid,names:[myName,f.name],photos:[myPhoto,f.photo||''],status:'waiting',mode,bet,np,lucky,s:'',v:Date.now()});
+    await setDoc(doc(db,'users',fid,'invites',r.id),{from:myName,mode,bet,np,lucky,at:Date.now()});
+    startOnline(r.id,0,[myName,f.name],true,mode,[myPhoto,f.photo||''],bet,np,lucky);
   }catch(e){$('fmsg').textContent=$('qmsg').textContent=$('qmsg2').textContent='Gagal mengirim undangan. Cek Rules Firestore.'}
+  });
 }
 async function accept(inv){
   if(!inv)return;
@@ -922,7 +966,7 @@ async function accept(inv){
     await deleteDoc(doc(db,'users',me.uid,'invites',inv.id));
     if(!d||d.status!=='waiting')return $('fmsg').textContent='Undangan sudah tidak berlaku.';
     const ph=[(d.photos||[])[0]||'',myPhoto];await updateDoc(r,{status:'playing',photos:ph});
-    startOnline(inv.id,1,d.names,false,d.mode||'classic',ph,d.bet||0);
+    startOnline(inv.id,1,d.names,false,d.mode||'classic',ph,d.bet||0,d.np||4,!!d.lucky);if(d.lucky)toast(`Lucky Game: dadu ${d.names[0]} lebih beruntung.`);
   }catch(e){$('fmsg').textContent='Gagal menerima undangan.'}
 }
 async function decline(id){
@@ -935,9 +979,9 @@ $('fadd').onclick=addFriend;
 
 let matchTimer=null;
 const MATCH_WAIT=6000; // detik tunggu lawan asli sebelum diganti bot
-function botGame(){
-  newGame({n:2,bots:[false,true]});
-  G.mode=cfg.mode;G.two=POP(cfg.mode)>0;G.nr=POP(cfg.mode)||2;G.quick=cfg.mode==='quick';G.rl=G.nr;G.open=[false,false];if(G.quick)G.tk=G.seats.map(()=>[0,0,-1,-1]);
+function botGame(np){
+  newGame({n:2,np,bots:[false,true]});
+  setLucky();G.mode=cfg.mode;G.two=POP(cfg.mode)>0;G.nr=POP(cfg.mode)||2;G.quick=cfg.mode==='quick';G.rl=G.nr;G.open=[false,false];if(G.quick)G.tk=G.seats.map(()=>startArr(G.np));
   G.seats[1].name='Bot';buildPanels();render();
   setBet(cfg.bet,2);takeStake();gbet();
 }
@@ -954,18 +998,20 @@ function toBot(id){
 async function quickMatch(){
   const m=$('qmsg');m.textContent='';
   if(!checkBet(m))return;
+  if(cfg.lucky)return withNp(np=>botGame(np));
+  withNp(async np=>{
   const bet=cfg.bet;m.textContent='Mencari lawan…';
   try{
-    const q=await getDocs(query(collection(db,'rooms'),where('status','==','open'),where('mode','==',cfg.mode),where('bet','==',bet),limit(10)));
+    const q=await getDocs(query(collection(db,'rooms'),where('status','==','open'),where('mode','==',cfg.mode),where('bet','==',bet),where('np','==',np),limit(10)));
     const d=q.docs.find(x=>x.data().host!==me.uid&&Date.now()-x.data().v<120000);
     if(d){
       const nm=[d.data().names[0],myName],ph=[(d.data().photos||[])[0]||'',myPhoto];
       await updateDoc(d.ref,{guest:me.uid,names:nm,photos:ph,status:'playing'});
-      m.textContent='';return startOnline(d.id,1,nm,false,cfg.mode,ph,bet);
+      m.textContent='';return startOnline(d.id,1,nm,false,cfg.mode,ph,bet,np);
     }
     const r=doc(collection(db,'rooms')),nm=[myName,'Lawan'];
-    await setDoc(r,{host:me.uid,guest:null,names:nm,photos:[myPhoto,''],status:'open',mode:cfg.mode,bet,s:'',v:Date.now()});
-    m.textContent='';startOnline(r.id,0,nm,true,cfg.mode,[myPhoto,''],bet);
+    await setDoc(r,{host:me.uid,guest:null,names:nm,photos:[myPhoto,''],status:'open',mode:cfg.mode,bet,np,s:'',v:Date.now()});
+    m.textContent='';startOnline(r.id,0,nm,true,cfg.mode,[myPhoto,''],bet,np);
     clearTimeout(matchTimer);
     matchTimer=setTimeout(async()=>{
       if(!G||G.online!==r.id||!G.wait)return;
@@ -975,12 +1021,14 @@ async function quickMatch(){
     },MATCH_WAIT);
   }catch(e){
     // Firestore bermasalah (mis. Rules) -> langsung lawan Bot
-    m.textContent='';botGame();
+    m.textContent='';botGame(np);
   }
+  });
 }
-function startOnline(id,my,names,wait,mode='classic',photos=[],bet=0){
+function startOnline(id,my,names,wait,mode='classic',photos=[],bet=0,np=4,lucky=false){
   if(unsubRoom)unsubRoom();
-  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],t:0,tk:mode==='quick'?[[0,0,-1,-1],[0,0,-1,-1]]:[[-1,-1,-1,-1],[-1,-1,-1,-1]],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:POP(mode)>0,nr:POP(mode)||2,quick:mode==='quick',rl:POP(mode)||2,open:[false,false],bet,pot:bet*2,staked:false,lives:[5,5]};
+  G={seats:[{c:my===0?3:1,name:names[0],bot:false,photo:photos[0]||''},{c:my===0?1:3,name:names[1],bot:false,photo:photos[1]||''}],np,t:0,tk:mode==='quick'?[startArr(np),startArr(np)]:[yardArr(np),yardArr(np)],d:0,st:wait?'wait':'roll',ml:[],online:id,my,wait,mode,two:POP(mode)>0,nr:POP(mode)||2,quick:mode==='quick',rl:POP(mode)||2,open:[false,false],bet,pot:bet*2,staked:false,lives:[5,5]};
+  G.lucky=!!lucky;
   startGame();if(!wait)takeStake();gbet();$('dnum').textContent='';$('msg').textContent=wait?(names[1]==='Lawan'?'Mencari lawan…':`Menunggu ${names[1]}…`):'';
   unsubRoom=onSnapshot(doc(db,'rooms',id),onRoom);
 }
@@ -1016,7 +1064,7 @@ function leaveRoom(){stopClock();hideRR();
 all().forEach(f=>{const pn=f.querySelector('.pn'),t=f.querySelector('.fs'),h=document.createElement('div');
 h.className='ph';h.innerHTML=t.querySelector('.em').outerHTML+'<b>'+t.querySelector('span').firstChild.textContent+'</b><button type="button" class="x" aria-label="Tutup">\u2715</button>';
 h.querySelector('.x').onclick=()=>f.classList.remove('open');pn.prepend(h);
-const tog=()=>{const was=f.classList.contains('open');all().forEach(x=>x.classList.remove('open'));if(!was){f.classList.add('open');if(f.querySelector('#modes'))onStep(1)}};
+const tog=()=>{const was=f.classList.contains('open');all().forEach(x=>x.classList.remove('open'));if(!was){f.classList.add('open');const cancel=()=>f.classList.remove('open');if(f.querySelector('#modes')){onStep(1);askType(()=>{},cancel)}else if(f.querySelector('#bteam,#bcom'))askType(()=>askNp(),cancel)}};
 t.onclick=tog;t.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tog()}}});
 addEventListener('click',e=>{if(e.target.classList&&e.target.classList.contains('fold'))e.target.classList.remove('open')})})();
 
@@ -1057,7 +1105,7 @@ function drawDesignOpts(){
 let pvKey=null;
 function openPv(k){
   pvKey=k;const b=$('pvb');b.dataset.bt=k;
-  let h=boardHTML();
+  let h=boardHTML(4);
   b.innerHTML=h;
   [-1,-1,9,53].forEach((p,i)=>{for(let c=0;c<4;c++){const e=document.createElement('div');e.className='tk';styleTk(e,COL[c]);const[x,y]=pos(c,p===9?p+c*3:p,i);e.style.left=pct(x);e.style.top=pct(y);b.appendChild(e)}});
   $('dpt').textContent='Pratinjau: '+(BT.find(x=>x[0]===k)||[,''])[1];
