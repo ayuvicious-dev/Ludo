@@ -294,7 +294,7 @@ body:has(#game.on){overflow:hidden}
   <div class="card"><h2>Suara</h2>
     <div class="row seg" id="segs"><button data-s="1">Aktif</button><button data-s="0">Mati</button></div>
   </div>
-  <div class="card"><h2>Link Demo</h2>
+  <div class="card" id="democard"><h2>Link Demo</h2>
     <small style="color:var(--mut)">Bagikan link ini. Siapa pun yang membukanya langsung masuk ke aplikasi memakai akun demo, tanpa mengetik email dan kata sandi.</small>
     <input id="demolink" type="text" readonly style="margin-top:10px" aria-label="Link demo">
     <p style="margin:0 0 10px;font-size:.9rem">Akun demo:<br>Email: <b id="demoem" style="word-break:break-all"></b><br>Kata sandi: <b id="demopw"></b></p>
@@ -398,7 +398,7 @@ onAuthStateChanged(auth,async u=>{
   const gc=readOk&&coins===null,gd=readOk&&dia===null; spinReady=readOk;// bonus pertama kali login
   myCoins=readOk?(gc?START_COINS:coins):0;myDia=readOk?(gd?START_DIA:dia):0;drawWallet();
   myName=name;myPhoto=photo;myCode=u.uid.slice(0,6).toUpperCase();$('mycode').textContent=myCode;
-  $('uemail').textContent=u.email===DEMO_EMAIL?'Akun demo':(u.email||'');drawProfile();$('pmsg').textContent='';
+  $('uemail').textContent=u.email===DEMO_EMAIL?'Akun demo':(u.email||'');$('democard').style.display=u.email===DEMO_EMAIL?'none':'';drawProfile();$('pmsg').textContent='';
   try{
     await setDoc(doc(db,'users',u.uid),{name,code:myCode,photo,wins:increment(0),played:increment(0),...(gc?{coins:START_COINS}:{}),...(gd?{diamonds:START_DIA}:{})},{merge:true});
     const s=(await getDoc(doc(db,'users',u.uid))).data();
